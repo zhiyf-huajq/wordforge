@@ -1,8 +1,9 @@
 name: verify
 
-# 能上 CI 的只有这四层 —— 它们零 npm 依赖、零出网：
-#   build.js / check-structure.js / test-logic.js / verify-cn.js
-#     -> 只 require('fs') / require('path') / require('vm')
+# 能上 CI 的只有这五层 —— 它们零 npm 依赖、零出网：
+#   build.js / check-structure.js / test-logic.js / verify-cn.js / check-readme.py
+#     -> 前四个只 require('fs') / require('path') / require('vm')
+#     -> check-readme.py 只用标准库，也不用联网（它只检查引用，不访问外链）
 # 其余五层（verify-settings / verify-read / shot / check-mobile-view / verify-cn-live）
 #   需要真实 Chrome 或真实网络，留在本机手动跑，不进 CI。
 #   理由：verify-cn-live 有 5 条依赖公益 CORS 中转，中转限流就会红。
@@ -48,3 +49,10 @@ jobs:
       # ④ 夹具解析：用抓下来的真实网页 / RSS 夹具离线跑解析器
       - name: 夹具解析
         run: node _dev/verify-cn.js "dist/词匠-离线背单词.html"
+
+      # ⑤ README 体检
+      #    README 引用了 42 张截图和若干对外下载地址。谁改一次文件名、
+      #    或者写错一个 `#锚点`，网页上就是碎图或死链 —— 而 git 不报错、构建也不报错。
+      #    ubuntu-latest 自带 python3，所以不需要额外 setup。
+      - name: README 体检
+        run: python3 _dev/check-readme.py README.md

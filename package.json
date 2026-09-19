@@ -8,7 +8,7 @@
   ],
 
   "name": "wordforge",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "词匠 WordForge —— 完全离线的背单词应用（单文件 HTML + 安卓 APK）",
   "license": "MIT",
@@ -20,11 +20,12 @@
   "scripts": {
     "build": "node _dev/build.js",
 
-    "_verify_说明": "以下三层零依赖零出网，CI 里跑的就是它们（见 .github/workflows/verify.yml）",
+    "_verify_说明": "以下四层零依赖零出网，CI 里跑的就是它们（见 .github/workflows/verify.yml）",
     "verify:structure": "node _dev/check-structure.js \"dist/词匠-离线背单词.html\"",
     "verify:logic": "node _dev/test-logic.js \"dist/词匠-离线背单词.html\"",
     "verify:fixtures": "node _dev/verify-cn.js \"dist/词匠-离线背单词.html\"",
-    "verify": "npm run verify:structure && npm run verify:logic && npm run verify:fixtures",
+    "verify:readme": "python _dev/check-readme.py README.md",
+    "verify": "npm run verify:structure && npm run verify:logic && npm run verify:fixtures && npm run verify:readme",
 
     "_browser_说明": "以下五层需要真实 Chrome（verify:live 还需要真实网络），只能在本机跑，不要塞进 CI",
     "verify:settings": "node _dev/verify-settings.js",

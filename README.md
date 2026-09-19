@@ -6,6 +6,8 @@
 
 **24,027** 个词条 · **24** 本词书 · **17,073** 组易混词 · **10** 个功能视图 · **0** 个外部依赖
 
+**[下载最新版](https://github.com/zhiyf-huajq/wordforge/releases/latest)** —— 网页版单文件（11.6 MB）或安卓 APK（4.4 MB）
+
 ---
 
 ## 这是什么
@@ -23,13 +25,20 @@
 
 ### 电脑上（最简单）
 
-下载 [`dist/词匠-离线背单词.html`](dist/词匠-离线背单词.html) ，双击，完成。
+下载 **[wordforge.html](https://github.com/zhiyf-huajq/wordforge/releases/latest/download/wordforge.html)**，双击，完成。
 
 > 11.6 MB 的单文件，用 Chrome / Edge / Firefox 打开都可以。
+> 同一份文件也提交在仓库里：[`dist/词匠-离线背单词.html`](dist/词匠-离线背单词.html)，
+> CI 会断言它与源码重建出来的结果逐字节一致，所以直接 clone 也能用。
 
 ### 手机上
 
-下载 [`词匠.apk`](词匠.apk) 传到手机安装。安卓 7.0 以上。
+下载 **[wordforge.apk](https://github.com/zhiyf-huajq/wordforge/releases/latest/download/wordforge.apk)** 传到手机安装。安卓 7.0 以上。
+
+> APK 放在 [Releases](https://github.com/zhiyf-huajq/wordforge/releases) 里，**不进仓库** ——
+> 二进制产物每重新打包一次，就会在 git 历史里永久多留一份副本，删不掉。
+> 上面两个 `latest` 地址永远指向最新版，换版本也不用改链接。
+> 想自己打包见下面的[「打包 APK」](#打包-apk)。
 
 <p>
 <img src="preview/apk_today_390.png" width="180" alt="手机端今日">
@@ -198,6 +207,8 @@ node _dev/check-mobile-view.js                                           # 手�
 node _dev/verify-cn-live.js                                              # 端到端（需要真实网络）
 ```
 
+### 打包 APK
+
 打包 APK 不需要 Gradle / Android Studio，只要 JDK 17 + Android build-tools。
 打包脚本在工作区之外的技能目录里（`build-apk.js` / `verify-apk.js`），
 仓库里放的是配置模板与 `apk-src/` 工程骨架。
@@ -219,6 +230,38 @@ node <skills>/single-html-to-apk/scripts/verify-apk.js apk.config.json
 > ⚠️ 签名密钥库（`apk-src/keystore/`）同样不入库。自己打包时生成一个新的即可 ——
 > 密钥是你的签名身份，公开之后别人就能签出「同包名同签名」的包，可以覆盖安装你的更新。
 > `*.jks` / `*.keystore` / `*.p12` / `*.pfx` 都写在 `.gitignore` 里了。
+
+### 发版（打 tag + 建 Release）
+
+发布前要同步改两处版本号：`package.json` 的 `version`、`CHANGELOG.md` 里新起一段 `## [1.2]`。
+然后一条命令：
+
+```bash
+python _dev/release.py 1.2              # 打 tag v1.2 + 建 Release + 上传产物
+python _dev/release.py 1.2 --dry-run    # 先看它准备做什么，不动远端
+python _dev/release.py --list           # 看已有 Release 与附件
+python _dev/release.py 1.2 --sync-notes # 只把已发 Release 的正文按 CHANGELOG 重刷
+```
+
+`_dev/release.py` 做四件事：
+
+1. 打**注释 tag**（`git tag -a`。不要用轻量 tag —— 那样 Release 上没有作者和时间）
+2. 推送 tag
+3. 建 Release，正文自动从 `CHANGELOG.md` 摘 `## [1.2]` 那一段
+4. 把产物传成附件
+
+正文从 CHANGELOG 摘，是为了让变更说明只有**一个**事实来源，不会出现「Release 上说改了三件事、
+CHANGELOG 上写了四件」这种对不上的情况。重复执行它是幂等的：Release 已存在就只同步附件。
+
+凭据走 `git credential fill`（复用 Git Credential Manager 里已经登录好的那份），
+**脚本里不存任何密钥**。这也是这个仓库的一条规矩，见下面[「仓库里没有的东西」](#仓库里没有的东西)。
+
+> ⚠️ **附件名必须是纯 ASCII** —— 这是个静默坑。GitHub 会把附件名里的非 ASCII 字符直接剥掉，
+> 不报错也不回滚：`词匠-离线背单词.html` 会变成 `-.html`，`词匠.apk` 会因为剥成空名而回退成 `default.apk`。
+> 症状是「HTTP 201、体积和 MIME 都对」，只有名字坏了 —— 所以只看返回值里的 `size` 会误判成功。
+> 脚本上传后会**回读 `name`** 再判定，中文说明放在 `label` 里（label 允许中文）。
+>
+> 附件名故意不带版本号，这样 `releases/latest/download/<名字>` 这个地址永远有效。
 
 ### 关于行尾（`.gitattributes`）
 
@@ -246,7 +289,7 @@ build/          源码分片（构建时拼成一个 HTML）
   part4_views.js    视图层（10 个视图）
   part4b_read.js    精读界面
   data_*.json       词库数据（词条 / 词书 / 词根 / 易混词组）
-_dev/           构建脚本、ETL 脚本、八层验证脚本，以及精读用的真实网页夹具
+_dev/           构建脚本、ETL 脚本、八层验证脚本、发版脚本，以及精读用的真实网页夹具
 dist/           构建产物：单文件 HTML
 preview/        界面截图
 apk-src/        APK 工程（Manifest + MainActivity.java + 资源）
@@ -266,6 +309,7 @@ apk.config.example.json   打包配置模板（复制成 apk.config.json 再用�
 |---|---|---|
 | `apk-src/keystore/*.jks` | 签名身份，公开等于把签名权交出去 | 自己生成一个新的 |
 | `apk.config.json` | 含签名口令与本机路径 | 复制 `apk.config.example.json` 改 |
+| `词匠.apk`（打包产物） | 二进制，且重建需要签名密钥库 | 从 [Releases](https://github.com/zhiyf-huajq/wordforge/releases) 下载 |
 | `raw/ecdict.csv` | 62.9 MB，有公开出处 | 从 [ECDICT](https://github.com/skywind3000/ECDICT) 下载 |
 | `raw/npm*/` `raw/qwerty/` | 大体积第三方语料包 | 见 `_dev/dl_*.js` 里的下载地址 |
 | `_dev/_probe_*` `_dev/probe*` | 开发时随手写的一次性排查脚本 | 不需要 |

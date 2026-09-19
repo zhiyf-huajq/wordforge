@@ -9,14 +9,24 @@
 用法：
     python _dev/release.py 1.2              # 打 tag v1.2 + 建 Release + 上传附件
     python _dev/release.py 1.2 --dry-run    # 只打印将要做什么，不动远端
-    python _dev/release.py --list           # 列出已有 Release
+    python _dev/release.py --list           # 列出已有 Release 与附件
     python _dev/release.py 1.2 --notes-only # 只打印从 CHANGELOG 摘出来的正文
+    python _dev/release.py 1.2 --sync-notes # 只把已发 Release 的正文按 CHANGELOG 重刷
 
 约定：
   · Release 正文自动从 CHANGELOG.md 里 `## [1.2]` 那一段摘取（单一事实来源，不会两边不一致）
   · 附件默认传 dist/词匠-离线背单词.html 与词匠.apk，存在什么传什么
   · 凭据走 `git credential fill`（即 Git Credential Manager 已存的那份），**脚本里不存任何密钥**
   · 需要 token 具备 `repo` 权限（建/改 Release 属于写操作）
+
+⚠️ 附件名必须【纯 ASCII】—— 这是踩过的坑，GitHub 不报错、不回滚，只是静默改名：
+   GitHub 会把附件名里的非 ASCII 字符直接剥掉。`词匠-离线背单词.html` 剥掉中文只剩 `-.html`；
+   `词匠.apk` 剥成空名，于是回退成 `default.apk`。症状是「上传成功、体积和 MIME 都对，只有名字坏了」，
+   所以只看返回的 size 就会以为没问题，必须回读 name 才算验过。
+   故一律用 ASCII 名（见 ASSETS 第三列），中文说明放 label（label 允许中文）。
+   另外故意【不带版本号】，这样下载地址可以永久写成
+   https://github.com/<owner>/<repo>/releases/latest/download/wordforge.apk
+   以后每次发版都不必再改 README 里的链接。
 """
 import hashlib
 import io
@@ -37,10 +47,17 @@ UPLOADS = 'https://uploads.github.com'
 UA = 'wordforge-release-helper'
 
 # 要挂到 Release 上的产物（按这个顺序）。不存在就跳过，不报错。
+#   (仓库内路径, MIME, Release 附件名【必须纯 ASCII】, 中文标签)
+# 附件名不带版本号，是为了让 releases/latest/download/<名字> 这个地址永久有效。
 ASSETS = [
-    ('dist/词匠-离线背单词.html', 'text/html'),
-    ('词匠.apk', 'application/vnd.android.package-archive'),
+    ('dist/词匠-离线背单词.html', 'text/html',
+     'wordforge.html', '单文件网页版 · 下载后双击即用'),
+    ('词匠.apk', 'application/vnd.android.package-archive',
+     'wordforge.apk', '安卓安装包'),
 ]
+
+# 原名（人类看的）与 ASCII 附件名的对应，仅用于把旧 Release 里被改坏的附件清掉
+LEGACY_BAD_NAMES = ['-.html', 'default.apk', '词匠-离线背单词.html', '词匠.apk']
 
 
 # ---------------------------------------------------------------- 基础工具
@@ -153,7 +170,11 @@ def main():
         if not data:
             print('  (还没有任何 Release)')
         for r in data:
-            print(f'  {r["tag_name"]:10s} {r["name"]}  assets={len(r.get("assets", []))}')
+            print(f'  {r["tag_name"]:10s} {r["name"]}  附件 {len(r.get("assets", []))} 个'
+                  f'{"  draft" if r.get("draft") else ""}')
+            for a in r.get('assets', []):
+                flag = '' if a['name'].isascii() else '   ← 名字含非 ASCII，不正常'
+                print(f'      · {a["name"]:26s} {a["size"]:>12,} B{flag}')
         return
 
     if not args:
@@ -164,6 +185,24 @@ def main():
     explicit = notes_from_changelog(version)
     if '--notes-only' in flags:
         print(explicit or f'(CHANGELOG.md 里没有 [{version}] 段落，正文将用兜底文案)')
+        return
+
+    # 只把已发布 Release 的正文按 CHANGELOG 重刷一遍 —— 不碰 tag、不碰附件。
+    # 用途：发完版才发现 CHANGELOG 写漏了一句，或措辞要改。
+    # 之所以要专门做一条路径，是因为「Release 正文只有一个来源」这件事
+    # 一旦破了例，下次两边就再也对不上了。
+    if '--sync-notes' in flags:
+        if not explicit:
+            sys.exit(f'!! CHANGELOG.md 里没有 [{version}] 段落，不知道要同步什么')
+        st, rel = api(f'/repos/{owner}/{repo}/releases/tags/{tag}')
+        if st != 200:
+            sys.exit(f'!! Release {tag} 不存在（HTTP {st}），没什么可同步的')
+        st, out = api(f'/repos/{owner}/{repo}/releases/{rel["id"]}', method='PATCH',
+                      body={'body': explicit})
+        if st != 200:
+            sys.exit(f'!! 同步正文失败 HTTP {st}: {out}')
+        print(f'✓ Release {tag} 的正文已按 CHANGELOG.md 更新（{len(explicit)} 字符）')
+        print(f'  {rel["html_url"]}')
         return
 
     # 1) 工作区必须干净 —— 否则 tag 会指向一个「有未提交改动」的状态
@@ -180,21 +219,24 @@ def main():
     exists, rel = api(f'/repos/{owner}/{repo}/releases/tags/{tag}')
     already = (exists == 200)
 
-    assets = [(p, ct) for p, ct in ASSETS if os.path.exists(p)]
+    assets = [(p, ct, n, lb) for p, ct, n, lb in ASSETS if os.path.exists(p)]
     if not assets:
         print('  ⚠️ 没有找到任何可上传的产物（dist/ 与 APK 都不存在），将建一个纯文本 Release')
 
+    # 附件名必须是纯 ASCII，先自己拦一道，别等 GitHub 静默改名
+    for p, _, n, _ in assets:
+        if not n.isascii():
+            sys.exit(f'!! 附件名 {n!r} 含非 ASCII —— GitHub 会静默剥字符改名，必须换掉')
+
     print(f'\n计划：tag={tag}  本地tag={"有" if tag_local else "无"}  '
           f'远端tag={"有" if tag_remote else "无"}  Release={"已存在" if already else "无"}')
-    for p, _ in assets:
-        print(f'  附件 {p}  {os.path.getsize(p):,} B  md5={md5(p)}')
+    for p, _, n, lb in assets:
+        print(f'  附件 {os.path.basename(p)}  →  {n}   {os.path.getsize(p):,} B  md5={md5(p)}')
+        print(f'        label = {lb}')
 
     if '--dry-run' in flags:
         print('\n(--dry-run：到此为止，没有改动任何东西)')
         return
-
-    if already and '--force' not in flags:
-        sys.exit(f'!! Release {tag} 已存在。要重建加 --force（会删掉旧 Release 再建）')
 
     # 3) 打 tag 并推送
     if not tag_local:
@@ -214,39 +256,82 @@ def main():
         print(f'· 远端已有 tag {tag}，跳过推送')
 
     # 4) 建（或重建）Release
+    #    「已存在」不是错误 —— 重跑时应该只同步附件，而不是整体报错退出。
     if already and '--force' in flags:
         st, _ = api(f'/repos/{owner}/{repo}/releases/{rel["id"]}', method='DELETE')
+        if st not in (200, 204):
+            sys.exit(f'!! 删除旧 Release 失败 HTTP {st}')
         print(f'✓ 已删除旧 Release（HTTP {st}）')
+        already = False
 
-    body = explicit or (f'词匠 WordForge {tag}\n\n完全离线的背单词应用。\n'
-                        f'详细变更见 [CHANGELOG.md](../blob/main/CHANGELOG.md)。')
-    st, rel = api(f'/repos/{owner}/{repo}/releases', method='POST', body={
-        'tag_name': tag,
-        'name': f'词匠 WordForge {tag}',
-        'body': body,
-        'draft': False,
-        'prerelease': False,
-    })
-    if st not in (200, 201):
-        sys.exit(f'!! 建 Release 失败 HTTP {st}: {rel}')
-    print(f'✓ Release 已建：{rel["html_url"]}')
-    print(f'  正文 {len(body)} 字符（来源：{"CHANGELOG.md" if explicit else "兜底文案"}）')
+    if already:
+        print(f'\n· Release 已存在，跳过创建：{rel["html_url"]}')
+        print('  （tag 与正文都不动，只做附件同步；要整体重建加 --force）')
+    else:
+        body = explicit or (f'词匠 WordForge {tag}\n\n完全离线的背单词应用。\n'
+                            f'详细变更见 [CHANGELOG.md](../blob/main/CHANGELOG.md)。')
+        st, rel = api(f'/repos/{owner}/{repo}/releases', method='POST', body={
+            'tag_name': tag,
+            'name': f'词匠 WordForge {tag}',
+            'body': body,
+            'draft': False,
+            'prerelease': False,
+        })
+        if st not in (200, 201):
+            sys.exit(f'!! 建 Release 失败 HTTP {st}: {rel}')
+        print(f'\n✓ Release 已建：{rel["html_url"]}')
+        print(f'  正文 {len(body)} 字符（来源：{"CHANGELOG.md" if explicit else "兜底文案"}）')
 
-    # 5) 传附件
-    for path, ctype in assets:
-        name = os.path.basename(path)
-        q = urllib.parse.urlencode({'name': name})
+    # 5) 同步附件（幂等）
+    #    先列出远端现有的附件：
+    #      · 已知的坏名字（被 GitHub 剥掉中文留下的），删掉
+    #      · 名字对但体积不符的，删掉重传
+    #      · 名字对且体积一致的，跳过
+    cur = {}
+    st, lst = api(f'/repos/{owner}/{repo}/releases/{rel["id"]}/assets')
+    if st == 200:
+        cur = {a['name']: a for a in lst}
+
+    want = {n: (p, ct, lb) for p, ct, n, lb in assets}
+
+    for name, a in list(cur.items()):
+        if name not in want:
+            # 只清我们自己会产的格式，别动用户手动上传的其它文件
+            if name in LEGACY_BAD_NAMES or name.endswith(('.html', '.apk')):
+                st, _ = api(f'/repos/{owner}/{repo}/releases/assets/{a["id"]}', method='DELETE')
+                print(f'· 清掉多余/坏名附件 {name}（HTTP {st}）')
+                cur.pop(name)
+
+    if not assets:
+        print('（没有产物可传）')
+    for path, ctype, name, label in assets:
+        a = cur.get(name)
+        if a and a.get('size') == os.path.getsize(path):
+            print(f'· 附件 {name} 已存在且体积一致，跳过')
+            continue
+        if a:
+            st, _ = api(f'/repos/{owner}/{repo}/releases/assets/{a["id"]}', method='DELETE')
+            print(f'· 附件 {name} 体积不符，已删除旧的重传（HTTP {st}）')
+
+        q = urllib.parse.urlencode({'name': name, 'label': label})
         with open(path, 'rb') as f:
             blob = f.read()
         st, out = api(f'{UPLOADS}/repos/{owner}/{repo}/releases/{rel["id"]}/assets?{q}',
                       method='POST', raw=blob, ctype=ctype, timeout=900)
         if st in (200, 201):
-            print(f'✓ 附件已上传 {name}  {out.get("size", 0):,} B')
+            got = out.get('name')
+            # 关键：回读 name。只看 size 会漏掉「被静默改名」这种失败。
+            ok = (got == name)
+            print(f'{"✓" if ok else "!!"} 附件已上传 {name}  {out.get("size", 0):,} B'
+                  f'  回读 name={got!r}' + ('' if ok else '  ← 名字不对，GitHub 改名了'))
             print(f'    {out.get("browser_download_url")}')
         else:
             print(f'!! 附件 {name} 上传失败 HTTP {st}: {out}')
 
     print(f'\n完成。Release 页：https://github.com/{owner}/{repo}/releases/tag/{tag}')
+    print(f'稳定下载地址（以后换版本也不用改）：')
+    for _, _, name, _ in assets:
+        print(f'  https://github.com/{owner}/{repo}/releases/latest/download/{name}')
 
 
 if __name__ == '__main__':

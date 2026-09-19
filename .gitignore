@@ -45,6 +45,20 @@ raw/prep/*
 apk-src/build/
 apk-src/res/values/strings.xml
 
+# ---------- 发布产物（APK 改由 GitHub Release 附件分发）----------
+# 为什么把 APK 从仓库里拿出去：二进制产物每重新打包一次，就会在 git 历史里
+# 永久多留一份副本 —— 删不掉。发十几个版本之后，仓库就没法看了。
+# 它现在挂在 Release 上：https://github.com/zhiyf-huajq/wordforge/releases
+# ⚠️ 注意 `git rm --cached` 只影响**之后的提交**，历史里那一份仍在，
+#    所以「克隆体积」不会因此变小。真正的收益是「以后不再累积」。
+*.apk
+
+# 为什么 `dist/` 下的 HTML 产物**反而要留**：
+#   ① 它是这个项目的主交付物（clone 下来双击就能用）；
+#   ② CI 靠 `git diff --exit-code -- dist/` 断言「重建结果与提交的逐字节一致」，
+#      产物不入库这条断言就没法跑。所以它必须在仓库里。
+#   ③ 它是纯文本，每次重建的增量很小；APK 是二进制，每次都顶格。
+
 # ---------- 浏览器调试临时文件（每个 11 MB，最占地方）----------
 _dev/_cdp_profile_*/
 _dev/_cdp_probe_*/
