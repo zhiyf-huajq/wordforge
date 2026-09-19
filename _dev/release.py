@@ -10,6 +10,7 @@
     python _dev/release.py 1.2              # 打 tag v1.2 + 建 Release + 上传附件
     python _dev/release.py 1.2 --dry-run    # 只打印将要做什么，不动远端
     python _dev/release.py --list           # 列出已有 Release 与附件
+    python _dev/release.py --self-test      # 核对「版本号 → CHANGELOG 段落」逐段对得上
     python _dev/release.py 1.2 --notes-only # 只打印从 CHANGELOG 摘出来的正文
     python _dev/release.py 1.2 --sync-notes # 只把已发 Release 的正文按 CHANGELOG 重刷
 
@@ -143,15 +144,62 @@ def parse_remote():
 
 
 def notes_from_changelog(version):
-    """从 CHANGELOG.md 摘 `## [1.2]` 那一段，作为 Release 正文。"""
+    """从 CHANGELOG.md 摘 `## [1.2]` 那一段，作为 Release 正文。
+
+    ⚠️ 版本号必须**整段**匹配，不能是前缀匹配。踩过的坑（真造成过破坏）：
+    原写法 `^##\\s*\\[?1\\.1\\]?` 在文件里存在 `## [1.1.1]` 时会把 `1.1` 配到 `[1.1.1]` 上
+    —— 因为 `]` 是可选量词，多余的 `1]` 被后面的 `[^\\n]*` 顺手吃掉了。
+    于是「同步 1.1 的正文」实际写进去的是 1.1.1 的内容，
+    **静默覆盖了已发布的 Release，全程没有任何报错**。
+    现在要求版本号后面紧跟 `]`（有方括号时）或行尾 / 分隔符。
+    配套的 `--self-test` 会逐段核对，别只测「能不能返回非空」——
+    前缀误配时它照样返回非空，只是内容错了。
+    """
     if not os.path.exists('CHANGELOG.md'):
         return None
     s = io.open('CHANGELOG.md', encoding='utf-8').read()
-    # 匹配 `## [1.2]` 或 `## [1.2] · 日期`，一直取到下一个 `## ` 或文末
-    pat = re.compile(r'^##\s*\[?' + re.escape(version) + r'\]?[^\n]*\n(.*?)(?=^##\s|\Z)',
-                     re.S | re.M)
+    v = re.escape(version)
+    pat = re.compile(
+        r'^##[ \t]*(?:\[(?P<br>' + v + r')\]|(?P<plain>' + v + r'))'
+        r'(?=[ \t·—\-–|]|$)[^\n]*\n'
+        r'(?P<body>.*?)(?=^##[ \t]|\Z)',
+        re.S | re.M)
     m = pat.search(s)
     return m.group(0).strip() if m else None
+
+
+def self_test():
+    """核对「版本号 -> CHANGELOG 段落」的映射逐段都对得上。
+
+    这是回归保护：前缀误配是静默的，不核对内容就发现不了。
+    """
+    if not os.path.exists('CHANGELOG.md'):
+        sys.exit('!! 找不到 CHANGELOG.md')
+    s = io.open('CHANGELOG.md', encoding='utf-8').read()
+    vers = re.findall(r'^##[ \t]*\[([^\]]+)\]', s, re.M)
+    if not vers:
+        sys.exit('!! CHANGELOG.md 里没有 `## [x.y.z]` 形式的段落')
+
+    bad = []
+    for v in vers:
+        got = notes_from_changelog(v)
+        head = got.splitlines()[0] if got else None
+        ok = bool(head) and head.startswith(f'## [{v}]')
+        print(f'  {"✓" if ok else "!!"} 问 {v:8s} -> {head!r}')
+        if not ok:
+            bad.append(v)
+
+    # 反向：不存在的版本号必须摘不到
+    ghost = notes_from_changelog('99.99.99')
+    ok = ghost is None
+    print(f'  {"✓" if ok else "!!"} 问不存在的 99.99.99 -> {ghost!r}')
+    if not ok:
+        bad.append('99.99.99')
+
+    print()
+    if bad:
+        sys.exit(f'!! 版本号匹配有问题：{bad}（前缀误配会静默写错 Release 正文）')
+    print(f'✓ 版本号匹配自检通过（{len(vers)} 个段落逐一对上）')
 
 
 # ---------------------------------------------------------------- 主流程
@@ -335,4 +383,7 @@ def main():
 
 
 if __name__ == '__main__':
+    if '--self-test' in sys.argv:
+        self_test()
+        sys.exit(0)
     main()
