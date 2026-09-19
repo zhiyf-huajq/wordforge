@@ -1,0 +1,36 @@
+{
+  "_说明": [
+    "这个文件【故意没有 dependencies / devDependencies】。",
+    "八层验证脚本只 require('fs') / require('path') / require('vm')，零 npm 依赖、零出网，",
+    "所以 clone 下来就能直接跑，CI 也不需要 npm install。",
+    "⚠️ 不要执行 npm install —— 一旦生成 package-lock.json 与 node_modules，",
+    "   上面这个「零依赖」的优点就没了。它只提供 scripts 与 engines。"
+  ],
+
+  "name": "wordforge",
+  "version": "1.1.0",
+  "private": true,
+  "description": "词匠 WordForge —— 完全离线的背单词应用（单文件 HTML + 安卓 APK）",
+  "license": "MIT",
+
+  "engines": {
+    "node": ">=18"
+  },
+
+  "scripts": {
+    "build": "node _dev/build.js",
+
+    "_verify_说明": "以下三层零依赖零出网，CI 里跑的就是它们（见 .github/workflows/verify.yml）",
+    "verify:structure": "node _dev/check-structure.js \"dist/词匠-离线背单词.html\"",
+    "verify:logic": "node _dev/test-logic.js \"dist/词匠-离线背单词.html\"",
+    "verify:fixtures": "node _dev/verify-cn.js \"dist/词匠-离线背单词.html\"",
+    "verify": "npm run verify:structure && npm run verify:logic && npm run verify:fixtures",
+
+    "_browser_说明": "以下五层需要真实 Chrome（verify:live 还需要真实网络），只能在本机跑，不要塞进 CI",
+    "verify:settings": "node _dev/verify-settings.js",
+    "verify:read": "node _dev/verify-read.js",
+    "verify:shots": "node _dev/shot.js",
+    "verify:mobile": "node _dev/check-mobile-view.js",
+    "verify:live": "node _dev/verify-cn-live.js"
+  }
+}

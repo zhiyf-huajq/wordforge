@@ -90,6 +90,48 @@
 <img src="preview/apk_art_390.png" width="170" alt="手机端精读导入">
 </p>
 
+<details>
+<summary><b>展开看其余 22 张界面截图</b></summary>
+
+<p><b>学习与复习</b><br>
+<img src="preview/03_词库管理.png" width="170" alt="词库管理">
+<img src="preview/07_复习队列.png" width="170" alt="复习队列">
+<img src="preview/08_测试中心.png" width="170" alt="测试中心">
+<img src="preview/13_巧记栏目.png" width="170" alt="巧记栏目">
+<img src="preview/14_词形变化页.png" width="170" alt="词形变化页">
+<img src="preview/15_固定搭配页.png" width="170" alt="固定搭配页">
+</p>
+
+<p><b>词条与词库</b><br>
+<img src="preview/10_词条详情.png" width="170" alt="词条详情">
+<img src="preview/17_词书_仅本册新增.png" width="170" alt="词书_仅本册新增">
+<img src="preview/18_词库页词书卡片.png" width="170" alt="词库页词书卡片">
+<img src="preview/12_显示开关.png" width="170" alt="显示开关">
+</p>
+
+<p><b>文章精读</b><br>
+<img src="preview/21_精读台_标生词.png" width="170" alt="精读台_标生词">
+<img src="preview/22_精读台_显释义.png" width="170" alt="精读台_显释义">
+<img src="preview/24_点词查义弹窗.png" width="170" alt="点词查义弹窗">
+<img src="preview/25_读后练习.png" width="170" alt="读后练习">
+<img src="preview/26_离线粘贴导入.png" width="170" alt="离线粘贴导入">
+<img src="preview/29_中国英文媒体源.png" width="170" alt="中国英文媒体源">
+</p>
+
+<p><b>易混词与词汇量</b><br>
+<img src="preview/31_易混词_搜索.png" width="170" alt="易混词_搜索">
+<img src="preview/34_词汇量_答题.png" width="170" alt="词汇量_答题">
+</p>
+
+<p><b>设置与手机端</b><br>
+<img src="preview/19_设置数值校验.png" width="170" alt="设置数值校验">
+<img src="preview/09_移动端视图.png" width="170" alt="移动端视图">
+<img src="preview/27_手机底栏_更多抽屉.png" width="170" alt="手机底栏_更多抽屉">
+<img src="preview/28_手机学习卡_滑动提示.png" width="170" alt="手机学习卡_滑动提示">
+</p>
+
+</details>
+
 ## 四六级词书的质量
 
 目标是「备考六级」，所以四级和六级两本词书单独做过完整度和质量核对：
@@ -118,7 +160,7 @@
 | 层 | 手段 | 结果 |
 |---|---|---|
 | 结构 | 静态扫描：标签配对、网络调用白名单、外部资源、数据质量 | **0 错误 / 0 警告** |
-| 逻辑 | 无头浏览器跑 663 条断言（算法 / 路由 / 出题 / 边界） | **663 / 663** |
+| 逻辑 | 纯 Node 假 DOM（**不起浏览器**）跑 663 条断言（算法 / 路由 / 出题 / 边界） | **663 / 663** |
 | 设置面板 | 真实 Chrome：输入校验、焦点、非法值回滚、版式体检 | **66 / 66** |
 | 精读模块 | 真实 Chrome：档位切换、点词弹窗、离线导入、联网开关 | **42 / 42** |
 | 网页解析 | 用抓下来的真实网页 / RSS 夹具离线跑解析器 | **41 / 41** |
@@ -141,6 +183,11 @@
 node _dev/build.js
 
 # 八层验证
+#
+# 前三层零依赖、零出网，CI 里跑的就是它们；也可以一条命令跑完：
+#   npm run verify          # = 结构 + 逻辑 + 夹具解析
+# ⚠️ 本仓库没有 npm 依赖，别执行 npm install
+#
 node _dev/check-structure.js "dist/词匠-离线背单词.html" _dev/check.txt   # 结构：0 错误 / 0 警告
 node _dev/test-logic.js     "dist/词匠-离线背单词.html"                  # 逻辑回归
 node _dev/verify-settings.js                                             # 真实 Chrome：设置面板
@@ -205,6 +252,10 @@ preview/        界面截图
 apk-src/        APK 工程（Manifest + MainActivity.java + 资源）
 docs/           功能分析文档
 raw/            人工校对的词表与语料（大文件不入库，见 .gitignore）
+.github/        CI（verify.yml：产物新鲜度 + 结构 + 逻辑 + 夹具解析）与 issue / PR 模板
+CHANGELOG.md    版本变更记录
+package.json    只放 scripts 与 engines，**没有任何依赖** —— 不要 npm install
+.editorconfig   让编辑器也守住 LF（.gitattributes 管得了 git，管不了编辑器写盘）
 .gitattributes  行尾与二进制规则（产物字节可复现，夹具逐字节保真）
 apk.config.example.json   打包配置模板（复制成 apk.config.json 再用）
 ```

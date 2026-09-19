@@ -1,0 +1,61 @@
+name: 问题反馈
+description: 报告一个 bug 或不好用的地方
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈！填得越具体，越可能一次就修好。
+
+        ⚠️ 如果涉及**安全隐患**（比如密钥泄露、数据外传），请不要用 issue，改看 [SECURITY.md](../../SECURITY.md)。
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 你用的是哪个版本
+      options:
+        - 单文件 HTML（电脑浏览器打开）
+        - 安卓 APK
+        - 自己从源码构建的
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: 环境
+      description: 浏览器与版本 / 安卓版本与机型。例如「Chrome 128 / Windows 11」或「Android 14 / 小米 14」
+      placeholder: Chrome 128 / Windows 11
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: 发生了什么
+      description: 你做了什么 → 期望是什么 → 实际是什么
+      placeholder: |
+        1. 打开「设置」页
+        2. 把「每日新词」改成 0
+        3. 期望：提示不能为 0；实际：光标跳走、数值变回 20 且没有提示
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: 能稳定复现吗
+      description: 每次都出现 / 偶尔出现 / 只出现过一次。如果有截图直接拖进来。
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我没有把 `apk.config.json`、签名密钥库（`*.jks`）或任何口令贴进来
+          required: true
+        - label: 这个问题在最新的 `main` 分支上仍然存在
+          required: false

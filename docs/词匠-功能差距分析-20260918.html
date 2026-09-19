@@ -79,18 +79,34 @@ li{margin:4px 0}
   <p class="sub">对照 扇贝单词 / 墨墨背单词 / 不背单词 / 百词斩 / 欧路词典 五款主流产品的功能面，盘点词匠已有的能力、真实的缺口，以及在这个项目约束下值得做与不值得做的功能。</p>
   <p class="meta">分析日期 2026-09-18 ｜ 对照版本：词匠单文件 HTML + APK（24027 词条 / 24 词书 / 927 词根 / 20 字段）</p>
 </header>
+<div class="note" style="border:2px solid #3b6d11;background:#eaf3de">
+  <b style="color:#2f5a0e">2026-09-19 补记：本文档定位出来的「四个高价值缺口」已全部落地。</b><br><br>
+  这份分析写于 2026-09-18，当天就有三项动工、第二天全部上线。
+  <b>下面「四、建议清单」里 P0 的四项请当作已完成记录来读，不要再当待办事项</b>：
+  <ul>
+    <li><b>词汇量测试</b> → 已实现，新增 <code>vocab</code> 视图（8 档阶梯自适应，埋 4 个假词陷阱校准虚报）</li>
+    <li><b>考试倒计时 + 每日量反推</b> → 已实现（设置页填考试日期 → 今日总览显示「距考试 N 天 · 建议每日 M 词」→ 一键套用）</li>
+    <li><b>听力题型</b> → 听音辨词已实现（复用 TTS；无语音时自动顺延到下一个可做题型并说明原因）。<b>听写（听音拼写）仍未做</b></li>
+    <li><b>形近词辨析</b> → 已实现，新增 <code>confuse</code> 视图（17,073 组，覆盖 15,909 个词）</li>
+  </ul>
+  视图数因此从 <b>8</b> 变成 <b>10</b>；功能对照矩阵里对应的几行已改标为 ✅。<br><br>
+  <b>仍然成立、值得保留的部分</b>：「五、明确不做的功能」里对图片记忆 / 影视原声 / 云同步 / 真题考频的取舍理由，
+  以及「三、功能对照矩阵」里对 P1 / P2 未动工项的判断。<br>
+  <b>另外补一处修正</b>：「导出词表 / 打印」原标 ❌，实际上统计页已有 <b>CSV 导出</b>；缺的是「按范围导出词表 + 可打印排版」，已改标 🟡。
+</div>
+
 
 <div class="kpis">
-  <div class="kpi"><div class="n">8</div><div class="l">视图</div><div class="h">今日/学习/复习/测试/精读/词库/统计/设置</div></div>
+  <div class="kpi"><div class="n">10</div><div class="l">视图</div><div class="h">今日/学习/复习/测试/精读/易混词/词汇量/词库/统计/设置</div></div>
   <div class="kpi"><div class="n">60+</div><div class="l">可调设置项</div><div class="h">含记忆算法 11 个参数</div></div>
   <div class="kpi"><div class="n">4</div><div class="l">题型</div><div class="h">英选义/中选词/拼写/卡片</div></div>
-  <div class="kpi"><div class="n">4</div><div class="l">高价值缺口</div><div class="h">全部离线可实现</div></div>
+  <div class="kpi"><div class="n">0</div><div class="l">未落地的高价值缺口</div><div class="h">四项已于 2026-09-18 全部实现</div></div>
 </div>
 
 <h2>一、一句话结论</h2>
 <div class="note">
   <b>词匠在最关键的两处其实已经超过市面免费版</b>：① 记忆算法的参数开放度（11 个参数全给你改，市面没有任何一款开放到这个程度，墨墨的算法干脆是黑盒）；② 内置的文章精读（市面只有扇贝阅读有类似能力，且是独立收费 App）。<br><br>
-  <b>真正的缺口集中在四个点，而且全部是「离线可做、不碰数据层」的</b>：词汇量测试（学之前不知道该从哪开始）、考试倒计时反推（不知道该每天学多少）、听力题型（六级听力占 35%，现在完全没有练的入口）、形近词辨析（六级选词填空的核心陷阱）。<br><br>
+  <b>真正的缺口集中在四个点，而且全部是「离线可做、不碰数据层」的</b><b style="color:#2f5a0e">（2026-09-19 补记：四项已全部落地，见文首横幅）</b>：词汇量测试（学之前不知道该从哪开始）、考试倒计时反推（不知道该每天学多少）、听力题型（六级听力占 35%，现在完全没有练的入口）、形近词辨析（六级选词填空的核心陷阱）。<br><br>
   市面那些看起来最热闹的功能 —— 打卡社区、组队 PK、排行榜、云同步、图片记忆、影视原声例句 —— <b>要么直接违反「离线可用、数据不上传」这条硬约束，要么在体积和版权上不划算</b>。这一部分应当明确不做，而不是「以后再补」。
 </div>
 
@@ -150,14 +166,14 @@ li{margin:4px 0}
 <tr><td>遗忘曲线图</td><td class="c">墨墨</td><td class="c n">❌</td><td>有持久度分布，但没有「预测保留率 vs 实际正确率」曲线 → <b>P1</b></td></tr>
 <tr><td>多轮正确才算过</td><td class="c">不背单词</td><td class="c n">❌</td><td>现在一次答对即过，选择题可以蒙对 → <b>P1</b></td></tr>
 <tr><td>难度建模（FSRS 三参数）</td><td class="c">Anki 4 家</td><td class="c n">❌</td><td>SM-2 只有单一缓动因子。升级到 DSR 模型工作量较大 → <b>P2</b></td></tr>
-<tr><td>考试倒计时反推每日量</td><td class="c">墨墨 百词斩</td><td class="c n">❌</td><td><b>P0</b></td></tr>
+<tr><td>考试倒计时反推每日量</td><td class="c">墨墨 百词斩</td><td class="c y">✅</td><td><code>examDate</code> → 一键套用 <code>newPerDay</code></td></tr>
 
 <tr><td colspan="4" style="background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--dim)">B · 题型与训练</td></tr>
 <tr><td>英选义（recog）</td><td class="c">五家全有</td><td class="c y">✅</td><td>可调选项数（optCount）</td></tr>
 <tr><td>中选词 / 回忆（recall）</td><td class="c">五家全有</td><td class="c y">✅</td><td></td></tr>
 <tr><td>拼写（spell）</td><td class="c">五家全有</td><td class="c y">✅</td><td>只有单一形态</td></tr>
 <tr><td>卡片（card）</td><td class="c">五家全有</td><td class="c y">✅</td><td>支持左右滑动切换</td></tr>
-<tr><td>听音选义 / 听音辨义</td><td class="c">百词斩 扇贝 欧路</td><td class="c n">❌</td><td>已有 TTS，只差题型 → <b>P0</b></td></tr>
+<tr><td>听音选义 / 听音辨义</td><td class="c">百词斩 扇贝 欧路</td><td class="c y">✅</td><td>复用 TTS；题干不露出单词，否则等于没测听力</td></tr>
 <tr><td>听写（听音拼写）</td><td class="c">百词斩 扇贝</td><td class="c n">❌</td><td><b>P0</b></td></tr>
 <tr><td>例句挖空 / 读词填空</td><td class="c">百词斩 欧路</td><td class="c p">🟡</td><td>只在「读后练习」里有语境填空，未进单词卡 → <b>P2</b></td></tr>
 <tr><td>组合拼写 / 填空拼写</td><td class="c">百词斩</td><td class="c p">🟡</td><td>拼写模式可细分为「全拼 / 缺字母填空」</td></tr>
@@ -176,7 +192,7 @@ li{margin:4px 0}
 <tr><td>派生词树</td><td class="c">不背（5500+ 棵）</td><td class="c p">🟡</td><td>有词形变化 + 巧记同族，但没有独立的「词根家族」视图 → <b>P1</b></td></tr>
 <tr><td>固定搭配</td><td class="c">不背 欧路</td><td class="c p">🟡</td><td>13–15%</td></tr>
 <tr><td>近义词辨析</td><td class="c">百词斩 欧路</td><td class="c p">🟡</td><td>13–15%</td></tr>
-<tr><td>形近词辨析</td><td class="c">百词斩 欧路</td><td class="c n">❌</td><td><b>P0（纯算法可生成，不吃语料）</b></td></tr>
+<tr><td>形近词辨析</td><td class="c">百词斩 欧路</td><td class="c y">✅</td><td><code>confuse</code> 视图 · 17,073 组 / 覆盖 15,909 词（构建期算好，运行时零计算）</td></tr>
 <tr><td>真题考频 / 考义 / 考点</td><td class="c">不背（17 万条）扇贝</td><td class="c n">❌</td><td>需真题语料，版权受限，不做</td></tr>
 <tr><td>原声例句（影视）</td><td class="c">不背（150 万条）</td><td class="c n">❌</td><td>版权 + 体积，不做</td></tr>
 <tr><td>图片记忆</td><td class="c">百词斩</td><td class="c n">❌</td><td>24027 词配图 → 体积 200MB+，单文件/APK 承受不住，不做</td></tr>
@@ -186,9 +202,9 @@ li{margin:4px 0}
 <tr><td>词书选择</td><td class="c">五家全有</td><td class="c y">✅</td><td>24 本，四级 4958 / 六级 6975</td></tr>
 <tr><td>每日新词 / 复习量</td><td class="c">五家全有</td><td class="c y">✅</td><td>newPerDay / revPerDay</td></tr>
 <tr><td>每日目标（词数）</td><td class="c">五家全有</td><td class="c y">✅</td><td>dailyGoal</td></tr>
-<tr><td>词汇量测试</td><td class="c">扇贝 百词斩 墨墨</td><td class="c n">❌</td><td>统计页只有「预估词汇量」，那是<b>学习结果的副产品</b>，不是起点定位 → <b>P0</b></td></tr>
+<tr><td>词汇量测试</td><td class="c">扇贝 百词斩 墨墨</td><td class="c y">✅</td><td><code>vocab</code> 视图 · 8 档阶梯自适应 + 4 个假词陷阱；<b>绝不写学习记录</b></td></tr>
 <tr><td>听力词汇量测试</td><td class="c">百词斩</td><td class="c n">❌</td><td>P1</td></tr>
-<tr><td>起点档位推荐</td><td class="c">扇贝 百词斩</td><td class="c n">❌</td><td>P0（与词汇量测试同一套逻辑）</td></tr>
+<tr><td>起点档位推荐</td><td class="c">扇贝 百词斩</td><td class="c y">✅</td><td>词汇量测试的结果页即为起点定位，可直接套用到设置</td></tr>
 
 <tr><td colspan="4" style="background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--dim)">E · 记录与反馈</td></tr>
 <tr><td>打卡热力图</td><td class="c">五家全有</td><td class="c y">✅</td><td>近 26 周</td></tr>
@@ -200,7 +216,7 @@ li{margin:4px 0}
 <tr><td>会话明细</td><td class="c">墨墨</td><td class="c y">✅</td><td>最近 12 次</td></tr>
 <tr><td>连续打卡天数 / 里程碑徽章</td><td class="c">五家全有</td><td class="c p">🟡</td><td>有热力图和日志，但没有「连续 N 天」这个数 → <b>P1</b></td></tr>
 <tr><td>周报 / 月报</td><td class="c">百词斩 欧路</td><td class="c n">❌</td><td>P2</td></tr>
-<tr><td>导出词表 / 打印</td><td class="c">不背 扇贝 欧路</td><td class="c n">❌</td><td>现在只能导入不能导出 → <b>P1</b></td></tr>
+<tr><td>导出词表 / 打印</td><td class="c">不背 扇贝 欧路</td><td class="c p">🟡</td><td>统计页已有 CSV 导出；缺的是「按范围导出词表（错词本 / 生词本 / 某本词书）+ 可打印排版」</td></tr>
 
 <tr><td colspan="4" style="background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--dim)">F · 自定义与离线</td></tr>
 <tr><td>主题</td><td class="c">大部分（1–3 套）</td><td class="c y">✅</td><td><b>7 套 + 明暗</b></td></tr>
@@ -358,7 +374,8 @@ li{margin:4px 0}
 </div>
 
 <footer>
-  词匠 WordForge · 功能差距分析 ｜ 2026-09-18 ｜
+  词匠 WordForge · 功能差距分析 ｜ 2026-09-18 ｜<b>2026-09-19 修订：视图数 8→10，四项 P0 缺口改标为已落地</b><br>
+  
   市面信息来自各产品官方页面、应用商店介绍与第三方实测横评（2026-09 检索）；词匠现状来自源码实测盘点（8 视图 / CFG_DEF 60+ 项 / 24027 词条）。
 </footer>
 

@@ -1,0 +1,57 @@
+# 让编辑器守住 .gitattributes 定下的行尾规矩。
+#
+# 为什么这个项目特别需要它：
+#   .gitattributes 里的 `* text=auto eol=lf` 管的是「进出 git 时怎么转换」，
+#   管不了「编辑器往磁盘上写什么」。而 dist/ 的字节数与 MD5 是 APK 的校验基线
+#   （打包脚本会拿 assets/index.html 跟它比对），一旦行尾被写成 CRLF，
+#   产物会凭空胖 7397 字节、verify-apk.js 莫名变红，而代码其实一行没改。
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.py]
+indent_size = 4
+
+[*.java]
+indent_size = 4
+
+# ============================================================
+# 以下这些【故意不管行尾】，对应 .gitattributes 里的 `-text`
+#
+# 它们是「外部世界的快照」：HTTP 抓下来的真实网页 / RSS 夹具、以及语料数据。
+# 归一化行尾等于偷偷改了测试依据 —— 而校验脚本不会因此报错。
+#
+# 用 unset 而不是写死 crlf：unset 表示「本条不表态」，编辑器会沿用文件现状，
+# 既不会强制转换，也不会把已有的 CRLF 改掉。
+# ============================================================
+
+[_dev/_cd_*.html]
+end_of_line = unset
+
+[_dev/_gt_*.html]
+end_of_line = unset
+
+[_dev/_gt_feed.txt]
+end_of_line = unset
+
+[raw/*.txt]
+end_of_line = unset
+
+[raw/*.csv]
+end_of_line = unset
+
+# 数据与产物：没有人工编辑价值，别让编辑器碰
+[build/data_*.json]
+insert_final_newline = unset
+trim_trailing_whitespace = unset
+
+[dist/*.html]
+insert_final_newline = unset
+trim_trailing_whitespace = unset
