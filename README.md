@@ -193,15 +193,16 @@ node _dev/build.js
 
 # 八层验证
 #
-# 前三层零依赖、零出网，CI 里跑的就是它们；也可以一条命令跑完：
-#   npm run verify          # = 结构 + 逻辑 + 夹具解析
+# 前四层零依赖、零出网，CI 里跑的就是它们；也可以一条命令跑完：
+#   npm run verify          # = 结构 + 逻辑 + 夹具解析 + README 体检
 # ⚠️ 本仓库没有 npm 依赖，别执行 npm install
 #
 node _dev/check-structure.js "dist/词匠-离线背单词.html" _dev/check.txt   # 结构：0 错误 / 0 警告
 node _dev/test-logic.js     "dist/词匠-离线背单词.html"                  # 逻辑回归
+node _dev/verify-cn.js      "dist/词匠-离线背单词.html"                  # 用抓下来的真实网页夹具跑解析
+python _dev/check-readme.py                                             # README 里的截图与链接是否都还在
 node _dev/verify-settings.js                                             # 真实 Chrome：设置面板
 node _dev/verify-read.js                                                 # 真实 Chrome：精读模块
-node _dev/verify-cn.js      "dist/词匠-离线背单词.html"                  # 用抓下来的真实网页夹具跑解析
 node _dev/shot.js                                                        # 35 张界面截图
 node _dev/check-mobile-view.js                                           # 手机窄屏：溢出 / 挤扁 / 交互
 node _dev/verify-cn-live.js                                              # 端到端（需要真实网络）
@@ -241,6 +242,7 @@ python _dev/release.py 1.2              # 打 tag v1.2 + 建 Release + 上传产
 python _dev/release.py 1.2 --dry-run    # 先看它准备做什么，不动远端
 python _dev/release.py --list           # 看已有 Release 与附件
 python _dev/release.py 1.2 --sync-notes # 只把已发 Release 的正文按 CHANGELOG 重刷
+python _dev/release.py --self-test      # 核对「版本号 → CHANGELOG 段落」逐段对得上
 ```
 
 `_dev/release.py` 做四件事：
@@ -295,7 +297,7 @@ preview/        界面截图
 apk-src/        APK 工程（Manifest + MainActivity.java + 资源）
 docs/           功能分析文档
 raw/            人工校对的词表与语料（大文件不入库，见 .gitignore）
-.github/        CI（verify.yml：产物新鲜度 + 结构 + 逻辑 + 夹具解析）与 issue / PR 模板
+.github/        CI（verify.yml：产物新鲜度 + 结构 + 逻辑 + 夹具解析 + README 体检）与 issue / PR 模板
 CHANGELOG.md    版本变更记录
 package.json    只放 scripts 与 engines，**没有任何依赖** —— 不要 npm install
 .editorconfig   让编辑器也守住 LF（.gitattributes 管得了 git，管不了编辑器写盘）
