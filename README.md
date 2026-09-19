@@ -152,17 +152,35 @@ node _dev/verify-cn-live.js                                              # 端�
 ```
 
 打包 APK 不需要 Gradle / Android Studio，只要 JDK 17 + Android build-tools。
-打包脚本与配置在工作区之外的技能目录里（`build-apk.js` / `verify-apk.js`），
-仓库里只放了 `apk.config.json` 与 `apk-src/` 工程骨架：
+打包脚本在工作区之外的技能目录里（`build-apk.js` / `verify-apk.js`），
+仓库里放的是配置模板与 `apk-src/` 工程骨架。
+
+**先复制一份配置模板**，把里面的 `<...>` 占位符改成你自己机器上的值：
+
+```bash
+cp apk.config.example.json apk.config.json    # 然后编辑 apk.config.json
+```
 
 ```bash
 node <skills>/single-html-to-apk/scripts/build-apk.js  apk.config.json
 node <skills>/single-html-to-apk/scripts/verify-apk.js apk.config.json
 ```
 
-> ⚠️ 本仓库**不包含** APK 签名密钥库（`apk-src/keystore/`）。自己打包时生成一个新的即可 ——
-> 密钥是你的签名身份，公开之后别人就能签出「同包名同签名」的包，不该进版本库。
-> 同理，密钥口令、`*.jks`、`*.keystore` 都已经写进 `.gitignore`。
+> ⚠️ **真正的 `apk.config.json` 不在仓库里**，因为它含签名口令与本机路径
+> （`keystorePass`、Android SDK 目录、含城市的签名信息）。模板是 `apk.config.example.json`。
+>
+> ⚠️ 签名密钥库（`apk-src/keystore/`）同样不入库。自己打包时生成一个新的即可 ——
+> 密钥是你的签名身份，公开之后别人就能签出「同包名同签名」的包，可以覆盖安装你的更新。
+> `*.jks` / `*.keystore` / `*.p12` / `*.pfx` 都写在 `.gitignore` 里了。
+
+### 关于行尾（`.gitattributes`）
+
+文本文件统一锁成 LF。这不是洁癖 —— `dist/词匠-离线背单词.html` 的**字节数与 MD5 是 APK 的校验基线**
+（打包脚本会拿 `assets/index.html` 跟它比对），一旦某次 clone 把几千个换行改成 CRLF，
+产物会凭空变大、校验莫名其妙变红，而代码其实一行没改。
+
+反过来，`_dev/_cd_*.html` / `_dev/_gt_*.html` / `_dev/_gt_feed.txt` 这些**抓下来的真实网页与 RSS 夹具**
+标了 `-text`，**逐字节原样保存** —— 它们是外部世界的快照，归一化行尾等于偷偷改了测试依据。
 
 ### 重建词库数据
 
@@ -181,12 +199,26 @@ build/          源码分片（构建时拼成一个 HTML）
   part4_views.js    视图层（10 个视图）
   part4b_read.js    精读界面
   data_*.json       词库数据（词条 / 词书 / 词根 / 易混词组）
-_dev/           构建脚本与验证脚本（八层）
+_dev/           构建脚本、ETL 脚本、八层验证脚本，以及精读用的真实网页夹具
 dist/           构建产物：单文件 HTML
 preview/        界面截图
 apk-src/        APK 工程（Manifest + MainActivity.java + 资源）
 docs/           功能分析文档
+raw/            人工校对的词表与语料（大文件不入库，见 .gitignore）
+.gitattributes  行尾与二进制规则（产物字节可复现，夹具逐字节保真）
+apk.config.example.json   打包配置模板（复制成 apk.config.json 再用）
 ```
+
+### 仓库里没有的东西
+
+| 内容 | 为什么不在 | 怎么获取 |
+|---|---|---|
+| `apk-src/keystore/*.jks` | 签名身份，公开等于把签名权交出去 | 自己生成一个新的 |
+| `apk.config.json` | 含签名口令与本机路径 | 复制 `apk.config.example.json` 改 |
+| `raw/ecdict.csv` | 62.9 MB，有公开出处 | 从 [ECDICT](https://github.com/skywind3000/ECDICT) 下载 |
+| `raw/npm*/` `raw/qwerty/` | 大体积第三方语料包 | 见 `_dev/dl_*.js` 里的下载地址 |
+| `_dev/_probe_*` `_dev/probe*` | 开发时随手写的一次性排查脚本 | 不需要 |
+| `_dev/*.txt`（除 `_gt_feed.txt`） | 运行日志与统计快照 | 自己跑脚本生成 |
 
 ## 设计上的几个取舍
 
