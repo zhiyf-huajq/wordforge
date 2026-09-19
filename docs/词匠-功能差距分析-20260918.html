@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>词匠 WordForge · 市面对照与可添加功能分析</title>
+<style>
+:root{
+  --bg:#f7f6f2; --panel:#ffffff; --panel-2:#f1efe8; --border:#e2e0d8;
+  --text:#2c2c2a; --dim:#5f5e5a; --faint:#888780;
+  --accent:#534ab7; --accent-soft:#eeedfe;
+  --ok:#3b6d11; --ok-soft:#eaf3de;
+  --warn:#854f0b; --warn-soft:#faeeda;
+  --bad:#a32d2d; --bad-soft:#fcebeb;
+  --info:#185fa5; --info-soft:#e6f1fb;
+  --r:12px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:940px;margin:0 auto;padding:40px 22px 80px}
+header{margin-bottom:34px}
+h1{font-size:24px;font-weight:600;margin:0 0 8px;letter-spacing:.2px}
+.sub{color:var(--dim);font-size:13.5px;margin:0}
+.meta{color:var(--faint);font-size:12.5px;margin-top:10px}
+h2{font-size:17px;font-weight:600;margin:38px 0 14px;padding-bottom:9px;border-bottom:1px solid var(--border)}
+h3{font-size:14.5px;font-weight:600;margin:22px 0 8px}
+p{margin:0 0 12px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:22px 0 6px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px}
+.kpi .n{font-size:22px;font-weight:600;letter-spacing:.3px}
+.kpi .l{font-size:12.5px;color:var(--dim);margin-top:2px}
+.kpi .h{font-size:12px;color:var(--faint);margin-top:6px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:top;word-break:break-word}
+th{font-weight:600;font-size:12.5px;color:var(--dim);background:var(--panel-2);position:sticky;top:0}
+tbody tr:last-child td{border-bottom:none}
+.c{text-align:center}
+.y{color:var(--ok);font-weight:600}
+.p{color:var(--warn);font-weight:600}
+.n{color:var(--bad);font-weight:600}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:6px;letter-spacing:.3px;white-space:nowrap}
+.t-p0{background:var(--bad-soft);color:var(--bad)}
+.t-p1{background:var(--warn-soft);color:var(--warn)}
+.t-p2{background:var(--info-soft);color:var(--info)}
+.t-no{background:var(--panel-2);color:var(--dim)}
+.item{border-left:3px solid var(--accent);padding:2px 0 2px 16px;margin:20px 0}
+.item.no{border-left-color:var(--border)}
+.item h3{margin-top:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.why{font-size:13px;color:var(--dim);margin:6px 0}
+.why b{color:var(--text);font-weight:600}
+dl{margin:10px 0 0;font-size:13px}
+dt{font-weight:600;color:var(--dim);font-size:12.5px;margin-top:9px}
+dd{margin:2px 0 0}
+code{background:var(--panel-2);border-radius:4px;padding:1px 5px;font-size:12.5px;
+  font-family:ui-monospace,Consolas,"Courier New",monospace}
+.note{background:var(--accent-soft);border:1px solid #cecbf6;border-radius:var(--r);padding:14px 18px;font-size:13.2px;margin:16px 0}
+.note b{color:#3c3489}
+footer{margin-top:46px;padding-top:18px;border-top:1px solid var(--border);color:var(--faint);font-size:12.5px}
+ul{margin:6px 0 12px;padding-left:22px}
+li{margin:4px 0}
+.scroll{overflow-x:auto}
+@media(max-width:640px){
+  body{font-size:13.5px}
+  .wrap{padding:26px 14px 60px}
+  h1{font-size:20px}
+  table{font-size:12.3px;min-width:560px}
+  th,td{padding:7px 8px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>词匠 WordForge · 市面对照与可添加功能分析</h1>
+  <p class="sub">对照 扇贝单词 / 墨墨背单词 / 不背单词 / 百词斩 / 欧路词典 五款主流产品的功能面，盘点词匠已有的能力、真实的缺口，以及在这个项目约束下值得做与不值得做的功能。</p>
+  <p class="meta">分析日期 2026-09-18 ｜ 对照版本：词匠单文件 HTML + APK（24027 词条 / 24 词书 / 927 词根 / 20 字段）</p>
+</header>
+
+<div class="kpis">
+  <div class="kpi"><div class="n">8</div><div class="l">视图</div><div class="h">今日/学习/复习/测试/精读/词库/统计/设置</div></div>
+  <div class="kpi"><div class="n">60+</div><div class="l">可调设置项</div><div class="h">含记忆算法 11 个参数</div></div>
+  <div class="kpi"><div class="n">4</div><div class="l">题型</div><div class="h">英选义/中选词/拼写/卡片</div></div>
+  <div class="kpi"><div class="n">4</div><div class="l">高价值缺口</div><div class="h">全部离线可实现</div></div>
+</div>
+
+<h2>一、一句话结论</h2>
+<div class="note">
+  <b>词匠在最关键的两处其实已经超过市面免费版</b>：① 记忆算法的参数开放度（11 个参数全给你改，市面没有任何一款开放到这个程度，墨墨的算法干脆是黑盒）；② 内置的文章精读（市面只有扇贝阅读有类似能力，且是独立收费 App）。<br><br>
+  <b>真正的缺口集中在四个点，而且全部是「离线可做、不碰数据层」的</b>：词汇量测试（学之前不知道该从哪开始）、考试倒计时反推（不知道该每天学多少）、听力题型（六级听力占 35%，现在完全没有练的入口）、形近词辨析（六级选词填空的核心陷阱）。<br><br>
+  市面那些看起来最热闹的功能 —— 打卡社区、组队 PK、排行榜、云同步、图片记忆、影视原声例句 —— <b>要么直接违反「离线可用、数据不上传」这条硬约束，要么在体积和版权上不划算</b>。这一部分应当明确不做，而不是「以后再补」。
+</div>
+
+<h2>二、市面五强的功能底牌</h2>
+<div class="scroll">
+<table>
+<thead><tr><th style="width:94px">产品</th><th style="width:150px">一句话定位</th><th>核心功能底牌</th><th style="width:150px">公认短板</th></tr></thead>
+<tbody>
+<tr>
+  <td><b>扇贝单词</b></td>
+  <td>老牌打卡派，功能最全</td>
+  <td>词根词缀深度解析 · 正版柯林斯释义 · 真题例句库（近 11 年四六级 / 近 40 年考研）· 4 种题型（英选中 / 中译英 / 听音辨义 / 拼写）· 派生词分组记忆（act → action/active/activity）· 打卡社群与排行榜 · 配套阅读 / 听力 / 口语</td>
+  <td>免费版功能受限多，深度使用基本要会员</td>
+</tr>
+<tr>
+  <td><b>墨墨背单词</b></td>
+  <td>算法派，抗遗忘最细</td>
+  <td>自研 MM 记忆算法（基于 1900 亿条记忆行为数据，论文发在 SIGKDD / IEEE TKDE）· 每个词由用户自评熟词度 → 动态排复习 · 遗忘曲线 / 记忆持久度 / 复习压力三套图表 · 上千万条用户共创助记 · 兼容 50 余种实体书词库 · 从自定义文章中提取生词</td>
+  <td>界面朴素无趣味；每日新词有免费额度上限；<b>算法是黑盒，参数不可调</b></td>
+</tr>
+<tr>
+  <td><b>不背单词</b></td>
+  <td>语境派，内容最厚</td>
+  <td>150 万条影视 / 新闻原声例句 · 2000+ 词根词缀（覆盖近 2 万词条）· 5500+ 棵派生词汇树 · 正版柯林斯英汉双解 · 17 万条真题例句（考义 / 考点 / 考频 / 考题四件套）· 拼写测试 · <b>至少 3 次答对才算过（防蒙对）</b> · 支持导出 PDF 打印</td>
+  <td>零基础不友好（例句里再蹦出生词）；应试题型少</td>
+</tr>
+<tr>
+  <td><b>百词斩</b></td>
+  <td>图词联想派，入门最松</td>
+  <td>一词一图（一个词配一张原创手绘）· <b>7–9 种训练模式</b>（单词自检 / 听音选义 / 中英文选词 / 组合拼写 / 填空拼写 / 读词填空 / 单词速听…）· 4 种背词模式（图片 / 押韵 / 深度 / 蛋糕）· 200+ 权威词库 · 锁屏背词 · 单词电台 / TV · <b>阅读词汇量与听力词汇量分开测</b> · 小班 / PK / 组队打卡</td>
+  <td><b>容易「记图不记词」</b>；选择题模式可以蒙对；复习机制偏死板（默认只能复习前一天）</td>
+</tr>
+<tr>
+  <td><b>欧路词典</b></td>
+  <td>工具派，扩展性最强</td>
+  <td>可自行上传牛津 / 柯林斯等权威词典包 · 可导入高阶词库 · 复习模式全自定义（拼写 / 例句填空 / 造句）· 原声例句 · 学习闭环：查词 → 自动进生词本 → 自定义拼写测试 · 可视化学习报表</td>
+  <td>词库要自己折腾；几乎无趣味性</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h2>三、功能对照矩阵</h2>
+<p style="font-size:13px;color:var(--dim)">
+  判定口径：<span class="y">✅ 已具备</span> ＝ 词匠当前能直接用；
+  <span class="p">🟡 部分具备</span> ＝ 有基础但可用性/覆盖度不够；
+  <span class="n">❌ 缺失</span> ＝ 完全没有。
+</p>
+<div class="scroll">
+<table>
+<thead><tr><th style="width:150px">功能</th><th style="width:74px" class="c">市面有谁</th><th style="width:82px" class="c">词匠</th><th>说明</th></tr></thead>
+<tbody>
+<tr><td colspan="4" style="background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--dim)">A · 记忆与复习算法</td></tr>
+<tr><td>间隔重复算法</td><td class="c">五家全有</td><td class="c y">✅</td><td>SM-2 改良版，台阶 / 缓动 / 惩罚参数齐全</td></tr>
+<tr><td>算法参数可调</td><td class="c n">都没有</td><td class="c y">✅</td><td><b>11 个参数全开放（initSteps / secondSteps / easeDelta / gradeMul / lapseMul / maxDays…）。这一项词匠领先所有对手</b></td></tr>
+<tr><td>记忆持久度</td><td class="c">墨墨</td><td class="c y">✅</td><td><code>strength()</code>，统计页有分布图</td></tr>
+<tr><td>遗忘曲线图</td><td class="c">墨墨</td><td class="c n">❌</td><td>有持久度分布，但没有「预测保留率 vs 实际正确率」曲线 → <b>P1</b></td></tr>
+<tr><td>多轮正确才算过</td><td class="c">不背单词</td><td class="c n">❌</td><td>现在一次答对即过，选择题可以蒙对 → <b>P1</b></td></tr>
+<tr><td>难度建模（FSRS 三参数）</td><td class="c">Anki 4 家</td><td class="c n">❌</td><td>SM-2 只有单一缓动因子。升级到 DSR 模型工作量较大 → <b>P2</b></td></tr>
+<tr><td>考试倒计时反推每日量</td><td class="c">墨墨 百词斩</td><td class="c n">❌</td><td><b>P0</b></td></tr>
+
+<tr><td colspan="4" style="background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--dim)">B · 题型与训练</td></tr>
+<tr><td>英选义（recog）</td><td class="c">五家全有</td><td class="c y">✅</td><td>可调选项数（optCount）</td></tr>
+<tr><td>中选词 / 回忆（recall）</td><td class="c">五家全有</td><td class="c y">✅</td><td></td></tr>
+<tr><td>拼写（spell）</td><td class="c">五家全有</td><td class="c y">✅</td><td>只有单一形态</td></tr>
+<tr><td>卡片（card）</td><td class="c">五家全有</td><td class="c y">✅</td><td>支持左右滑动切换</td></tr>
+<tr><td>听音选义 / 听音辨义</td><td class="c">百词斩 扇贝 欧路</td><td class="c n">❌</td><td>已有 TTS，只差题型 → <b>P0</b></td></tr>
+<tr><td>听写（听音拼写）</td><td class="c">百词斩 扇贝</td><td class="c n">❌</td><td><b>P0</b></td></tr>
+<tr><td>例句挖空 / 读词填空</td><td class="c">百词斩 欧路</td><td class="c p">🟡</td><td>只在「读后练习」里有语境填空，未进单词卡 → <b>P2</b></td></tr>
+<tr><td>组合拼写 / 填空拼写</td><td class="c">百词斩</td><td class="c p">🟡</td><td>拼写模式可细分为「全拼 / 缺字母填空」</td></tr>
+<tr><td>音节拆分 / 自然拼读</td><td class="c">背单词花园</td><td class="c n">❌</td><td>P2</td></tr>
+<tr><td>发音跟读打分</td><td class="c">背单词花园</td><td class="c n">❌</td><td>需要声学模型，不做</td></tr>
+
+<tr><td colspan="4" style="background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--dim)">C · 词汇内容</td></tr>
+<tr><td>音标（美/英）</td><td class="c">五家全有</td><td class="c y">✅</td><td>美音标 99.9%</td></tr>
+<tr><td>中文释义</td><td class="c">五家全有</td><td class="c y">✅</td><td>四六级 100%</td></tr>
+<tr><td>词性</td><td class="c">五家全有</td><td class="c y">✅</td><td>四六级 100%</td></tr>
+<tr><td>例句</td><td class="c">五家全有</td><td class="c y">✅</td><td>四六级 94–98%</td></tr>
+<tr><td>同义词 / 反义词</td><td class="c">不背 欧路</td><td class="c y">✅</td><td>82–83%</td></tr>
+<tr><td>巧记 / 助记</td><td class="c">墨墨（千万条共创）</td><td class="c y">✅</td><td>离线自有库，不分师资</td></tr>
+<tr><td>词形变化</td><td class="c">五家全有</td><td class="c p">🟡</td><td>64%，受 ECDICT 源限制（天花板）</td></tr>
+<tr><td>词根词缀</td><td class="c">扇贝 不背（2000+）</td><td class="c p">🟡</td><td>927 词根，覆盖 13–15%（源规模限制）</td></tr>
+<tr><td>派生词树</td><td class="c">不背（5500+ 棵）</td><td class="c p">🟡</td><td>有词形变化 + 巧记同族，但没有独立的「词根家族」视图 → <b>P1</b></td></tr>
+<tr><td>固定搭配</td><td class="c">不背 欧路</td><td class="c p">🟡</td><td>13–15%</td></tr>
+<tr><td>近义词辨析</td><td class="c">百词斩 欧路</td><td class="c p">🟡</td><td>13–15%</td></tr>
+<tr><td>形近词辨析</td><td class="c">百词斩 欧路</td><td class="c n">❌</td><td><b>P0（纯算法可生成，不吃语料）</b></td></tr>
+<tr><td>真题考频 / 考义 / 考点</td><td class="c">不背（17 万条）扇贝</td><td class="c n">❌</td><td>需真题语料，版权受限，不做</td></tr>
+<tr><td>原声例句（影视）</td><td class="c">不背（150 万条）</td><td class="c n">❌</td><td>版权 + 体积，不做</td></tr>
+<tr><td>图片记忆</td><td class="c">百词斩</td><td class="c n">❌</td><td>24027 词配图 → 体积 200MB+，单文件/APK 承受不住，不做</td></tr>
+<tr><td>柯林斯 / 朗文授权释义</td><td class="c">不背 扇贝 百词斩</td><td class="c n">❌</td><td>需授权费，不做</td></tr>
+
+<tr><td colspan="4" style="background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--dim)">D · 定位与规划</td></tr>
+<tr><td>词书选择</td><td class="c">五家全有</td><td class="c y">✅</td><td>24 本，四级 4958 / 六级 6975</td></tr>
+<tr><td>每日新词 / 复习量</td><td class="c">五家全有</td><td class="c y">✅</td><td>newPerDay / revPerDay</td></tr>
+<tr><td>每日目标（词数）</td><td class="c">五家全有</td><td class="c y">✅</td><td>dailyGoal</td></tr>
+<tr><td>词汇量测试</td><td class="c">扇贝 百词斩 墨墨</td><td class="c n">❌</td><td>统计页只有「预估词汇量」，那是<b>学习结果的副产品</b>，不是起点定位 → <b>P0</b></td></tr>
+<tr><td>听力词汇量测试</td><td class="c">百词斩</td><td class="c n">❌</td><td>P1</td></tr>
+<tr><td>起点档位推荐</td><td class="c">扇贝 百词斩</td><td class="c n">❌</td><td>P0（与词汇量测试同一套逻辑）</td></tr>
+
+<tr><td colspan="4" style="background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--dim)">E · 记录与反馈</td></tr>
+<tr><td>打卡热力图</td><td class="c">五家全有</td><td class="c y">✅</td><td>近 26 周</td></tr>
+<tr><td>学习量趋势</td><td class="c">五家全有</td><td class="c y">✅</td><td>近 30 天柱状</td></tr>
+<tr><td>掌握度分布</td><td class="c">墨墨</td><td class="c y">✅</td><td>环图 + 持久度五档直方图</td></tr>
+<tr><td>词书进度表</td><td class="c">五家全有</td><td class="c y">✅</td><td>含已学 / 已掌握 / 待复习</td></tr>
+<tr><td>错词本</td><td class="c">五家全有</td><td class="c y">✅</td><td>「我的词书」里的错题本</td></tr>
+<tr><td>生词本</td><td class="c">五家全有</td><td class="c y">✅</td><td>手动收藏 + 精读生词自动入库</td></tr>
+<tr><td>会话明细</td><td class="c">墨墨</td><td class="c y">✅</td><td>最近 12 次</td></tr>
+<tr><td>连续打卡天数 / 里程碑徽章</td><td class="c">五家全有</td><td class="c p">🟡</td><td>有热力图和日志，但没有「连续 N 天」这个数 → <b>P1</b></td></tr>
+<tr><td>周报 / 月报</td><td class="c">百词斩 欧路</td><td class="c n">❌</td><td>P2</td></tr>
+<tr><td>导出词表 / 打印</td><td class="c">不背 扇贝 欧路</td><td class="c n">❌</td><td>现在只能导入不能导出 → <b>P1</b></td></tr>
+
+<tr><td colspan="4" style="background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--dim)">F · 自定义与离线</td></tr>
+<tr><td>主题</td><td class="c">大部分（1–3 套）</td><td class="c y">✅</td><td><b>7 套 + 明暗</b></td></tr>
+<tr><td>字号 / 字体 / 大卡片</td><td class="c">部分</td><td class="c y">✅</td><td></td></tr>
+<tr><td>显示项开关</td><td class="c">欧路</td><td class="c y">✅</td><td><b>13 个开关</b>（音标/例句/词根/词频/辨析/巧记…）</td></tr>
+<tr><td>队列顺序</td><td class="c">墨墨</td><td class="c y">✅</td><td>加权随机 / 完全随机 / 固定顺序</td></tr>
+<tr><td>键盘快捷键</td><td class="c n">几乎没有</td><td class="c y">✅</td><td>桌面端独有优势</td></tr>
+<tr><td>导入自定义词表</td><td class="c">墨墨 欧路 百词斩</td><td class="c y">✅</td><td>+ 新建词书</td></tr>
+<tr><td>完全离线可用</td><td class="c n">五家都要联网</td><td class="c y">✅</td><td><b>全局离线，唯一联网的精读可一键关</b></td></tr>
+<tr><td>数据不上传</td><td class="c n">五家全部云同步</td><td class="c y">✅</td><td>localStorage 单 key，结构校验钉死唯一网络出口</td></tr>
+<tr><td>发音朗读</td><td class="c">五家全有</td><td class="c y">✅</td><td>系统 TTS，美/英音 + 语速可调</td></tr>
+
+<tr><td colspan="4" style="background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--dim)">G · 阅读与语境</td></tr>
+<tr><td>文章精读</td><td class="c">扇贝阅读（独立收费 App）</td><td class="c y">✅</td><td><b>内置且免费，9 个源、四档辅助、点词弹窗、读后三类练习</b></td></tr>
+<tr><td>生词直接入库</td><td class="c">欧路 扇贝</td><td class="c y">✅</td><td>一键进自定义词书</td></tr>
+<tr><td>中文英文媒体源</td><td class="c n">都没有</td><td class="c y">✅</td><td>中国日报五栏目 + 环球时报</td></tr>
+<tr><td>完全离线粘贴导入</td><td class="c n">都没有</td><td class="c y">✅</td><td>断网也能精读</td></tr>
+
+<tr><td colspan="4" style="background:var(--panel-2);font-weight:600;font-size:12.5px;color:var(--dim)">H · 社交与激励（按硬约束整体不做）</td></tr>
+<tr><td>打卡社区 / 排行榜</td><td class="c">扇贝 百词斩 墨墨</td><td class="c n">不做</td><td rowspan="5">这五项全都需要账号体系与服务端，与「离线可用 + 数据不上传」直接冲突。<br><b>可做的替代方案</b>：本地连续天数 + 里程碑徽章（P1），效果上能满足「不想断签」的心理驱动，且零联网。</td></tr>
+<tr><td>组队打卡 / 同桌</td><td class="c">扇贝 百词斩</td><td class="c n">不做</td></tr>
+<tr><td>单词 PK / 对战</td><td class="c">百词斩</td><td class="c n">不做</td></tr>
+<tr><td>云同步 / 多端进度</td><td class="c">五家全有</td><td class="c n">不做</td></tr>
+<tr><td>AI 问答 / 造句</td><td class="c">部分</td><td class="c n">不做</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>四、建议清单</h2>
+
+<h3>P0 · 强烈推荐（离线可做、价值最高、工作量最小）</h3>
+
+<div class="item">
+  <h3>1 · 词汇量测试 <span class="tag t-p0">P0</span></h3>
+  <p class="why"><b>为什么值得做</b>：现在统计页那个「预估词汇量」是<b>学习结果的副产品</b> —— 依赖你已经学了多少词、持久度怎么样。而市面的词汇量测试是<b>起点定位</b>：学之前先测一次，然后它回答三个问题 —— 我大概什么水平、该从哪本词书开始、每天该学多少。这三件事恰好在词匠里完全没有入口。</p>
+  <dl>
+    <dt>怎么做（纯离线）</dt>
+    <dd>从各档位词表分层抽样 30–40 题（中考 / 高考 / 四级 / 六级 / 考研 各抽若干），每题给「认识 / 不认识」，答「认识」的再补一道四选一验证（防自评虚高）。用阶梯法收敛：某一档正确率低于 50% 就停止往下测。最后按档位对词表规模加权求和，得到一个估算区间而不是单一数字。</dd>
+    <dt>实现要点</dt>
+    <dd>不新增数据结构，直接复用 <code>WORDS</code> + <code>LVL_ORDER</code>；结果只写 <code>DB.cfg</code> 的推荐值，不污染 <code>DB.prog</code>（那是记忆算法地盘）。</dd>
+    <dt>参照产品</dt><dd>扇贝「智能词汇量测试」、百词斩「阅读 / 听力词汇量分开测」</dd>
+  </dl>
+</div>
+
+<div class="item">
+  <h3>2 · 考试倒计时 + 每日量反推 <span class="tag t-p0">P0</span></h3>
+  <p class="why"><b>为什么值得做</b>：你现在的设置是「每天新学 20 个」，但 20 这个数字是怎么来的？没人知道。真实场景是反过来的：距离 12 月六级还有 N 天，词库里还剩 M 个没学，所以每天至少要学 <code>M/N</code> 个 —— 而且这个数每过一天都要重算。这是一个纯算术问题，却决定了整个备考节奏。</p>
+  <dl>
+    <dt>怎么做</dt>
+    <dd>设置里加「考试日期」字段 → 今日总览顶部显示「距考试 83 天 · 建议每日 32 词（当前 20，偏低 12）」→ 一键套用到 <code>newPerDay</code>。剩余量要按「目标词书的总数 − 已学」算，而不是按 I 词库总数。</dd>
+    <dt>顺带能做的</dt>
+    <dd>按当前 pace 预测「按这个速度，到考试前能学完 X%」，比单纯报数字更有推动力。</dd>
+    <dt>参照产品</dt><dd>墨墨（把学习量换算成每日时长）、百词斩「调整计划 → 完成天数」</dd>
+  </dl>
+</div>
+
+<div class="item">
+  <h3>3 · 听力题型（听音选义 / 听音拼写） <span class="tag t-p0">P0</span></h3>
+  <p class="why"><b>为什么值得做</b>：六级听力占 35%，是四项里权重最高的一档。而现在词匠的 4 种题型（英选义 / 中选词 / 拼写 / 卡片）<b>没有一种需要用到耳朵</b>。这意味着「背单词」和「听力」在应用里是两个完全没有交集的技能 —— 这是当前最大的功能空洞。</p>
+  <dl>
+    <dt>怎么做</dt>
+    <dd>复用现有 TTS（已经支持美/英音 + 语速）。新增两种题型：① <b>听音选义</b> —— 只播发音、不显示单词，四选一中文释义；② <b>听音拼写</b> —— 只播发音，键盘拼出来。都挂在现有的 <code>activeModes</code> 开关体系下，用户可自由开关。</dd>
+    <dt>实现要点</dt>
+    <dd>关键设计是<b>题干不能露出单词</b>。现有题型渲染函数里「显示单词」的部分要按题型区分，否则一眼看到拼写就等于没测听力。需要在渲染层加一个 <code>hideStem</code> 分支。</dd>
+    <dt>参照产品</dt><dd>百词斩「听音选义 / 单词速听」、扇贝「听音辨义」、欧路「听写」</dd>
+  </dl>
+</div>
+
+<div class="item">
+  <h3>4 · 形近词辨析 <span class="tag t-p0">P0</span></h3>
+  <p class="why"><b>为什么值得做</b>：<code>affect / effect</code>、<code>adapt / adopt</code>、<code>principal / principle</code>、<code>desert / dessert</code> —— 这类词是六级选词填空和改错的核心陷阱，而且<b>靠背单个词是防不住的</b>，必须并排对比才记得住。库里已有「近义词辨析」（13–15% 覆盖），但形近词完全空白。</p>
+  <dl>
+    <dt>怎么做（完全不依赖语料）</dt>
+    <dd>纯算法生成，不需要任何外部数据：在词库里找<b>编辑距离 ≤ 2</b>、<b>长度差 ≤ 2</b>、<b>义项词性重叠</b> 的词对，按「相似度高 + 词频都高」排序，取前 N 组做对比卡。放在「巧记」那一栏的末尾，或者独立一个「易混词」视图。</dd>
+    <dt>为什么这条路特别划算</dt>
+    <dd>近义词辨析和搭配之所以卡在 13–15%，是因为它们<b>依赖源语料的规模</b>（数据源里就没那么多）。而形近词是<b>从词形本身算出来的</b>，24027 个词条能立刻生成几千组，覆盖率只受词库规模限制，不受语料限制 —— 这是少数几个能「绕开数据天花板」的功能。</dd>
+  </dl>
+</div>
+
+<h3>P1 · 值得做（工作量中等）</h3>
+
+<div class="item">
+  <h3>5 · 遗忘曲线图 <span class="tag t-p1">P1</span></h3>
+  <p class="why"><b>为什么</b>：墨墨的招牌就是「遗忘曲线 / 记忆持久度 / 复习压力」三张图。词匠已经有 <code>strength()</code> 和每条的 <code>[LAST, I, REPS]</code>，缺的只是把「预测保留率」和「实际正确率」画成两条线做对照。有了这条对照，用户第一次能看见「算法准不准」，而不是盲信。</p>
+  <dl><dt>做法</dt><dd>横轴按「距上次复习的天数 / 当时设定的间隔」分桶，纵轴是实测正确率；再叠一条按 <code>strength()</code> 公式算出的预测线。</dd></dl>
+</div>
+
+<div class="item">
+  <h3>6 · 多轮正确才算掌握 <span class="tag t-p1">P1</span></h3>
+  <p class="why"><b>为什么</b>：不背单词的做法是「同一个词至少要 3 次答对才算过」。现行的「一次答对即升阶」在选择题模式下有一个明确的漏洞：<b>4 选 1 有 25% 的蒙对概率</b>，蒙对之后算法会以为你记住了，把这个词的间隔拉长 —— 结果下次见面完全不认识。这是会真实损伤记忆算法准确性的问题。</p>
+  <dl><dt>做法</dt><dd>设置里加「连续答对 N 次才升阶」，默认 3。正确项必须连续、答错清零。需要新增一个计数字段（可用现有 <code>prog</code> 数组的空位）。</dd></dl>
+</div>
+
+<div class="item">
+  <h3>7 · 词根家族视图 <span class="tag t-p1">P1</span></h3>
+  <p class="why"><b>为什么</b>：库里已有 927 个词根，但现在只能「在某个词的卡片上看到它属于哪个词根」，不能「从词根出发看它带出了哪些词」。不背单词的 5000+ 棵派生词汇树就是干的这件事，而词匠的数据其实已经够撑起这个视图了。</p>
+  <dl><dt>做法</dt><dd>新增一个按词根聚合的列表页：点词根 → 展开同根所有词（含各自档位），支持一键把这些词加入当前学习队列。</dd></dl>
+</div>
+
+<div class="item">
+  <h3>8 · 导出词表（CSV / Markdown / 可打印） <span class="tag t-p1">P1</span></h3>
+  <p class="why"><b>为什么</b>：现在词匠只能<b>导入</b>不能<b>导出</b> —— 这是个明显的不对称。真实用途很清楚：把错词本导出来打印、考前手写一遍；或者把生词本导出成 CSV 喂给别的工具。不背单词和欧路都支持导出，欧路甚至把「导出打印」当成卖点。</p>
+  <dl><dt>做法</dt><dd>在词库页加导出按钮，支持选范围（错词本 / 生词本 / 某本词书 / 全部）+ 选格式。纯前端 Blob 下载，不联网。</dd></dl>
+</div>
+
+<div class="item">
+  <h3>9 · 连续打卡天数 + 里程碑徽章 <span class="tag t-p1">P1</span></h3>
+  <p class="why"><b>为什么</b>：扇贝、百词斩的「不想断签」是最强的留存机制。它不需要社区、不需要账号 —— 只要把 <code>DB.log</code> 里已有的日期连起来数一遍。用本地徽章（7 天 / 30 天 / 100 天 / 365 天）替代排行榜，能在不碰硬约束的前提下拿到同一种心理驱动力。</p>
+</div>
+
+<h3>P2 · 锦上添花</h3>
+<div class="card" style="font-size:13px">
+<ul>
+  <li><b>音节拆分</b>（长词拆成 <code>to-ma-to</code> 式小块，辅助拼写）—— 参照背单词花园的自然拼读。</li>
+  <li><b>例句挖空进单词卡</b> —— 读后练习里已有语境填空的实现，搬到单词卡上就是「读词填空」模式。</li>
+  <li><b>周报 / 月报</b> —— 自动生成本周学习量、掌握率、薄弱词书，可导出。</li>
+  <li><b>锁屏 / 后台听单词</b>（手机端）—— 用 TTS 排队播报今日所学词，通勤时用。侵入性较大，需谨慎。</li>
+  <li><b>升级到 DSR 难度模型</b>（FSRS 思路）—— 把单一缓动因子拆成「记忆稳定性 / 难度 / 可提取性」三参数。理论收益明确（同样保留率下可减少 25–35% 复习量），但属于算法层重写，风险和验证成本都高。</li>
+</ul>
+</div>
+
+<h2>五、明确不做的功能（附理由）</h2>
+<div class="item no">
+  <h3>图片记忆（百词斩式）<span class="tag t-no">不做</span></h3>
+  <p class="why"><b>理由</b>：24027 个词条，每词配一张图，即使按每张 20KB 的强压缩算，也要给单文件产物加上约 <b>480MB</b> —— 而现在的 HTML 是 11MB、APK 是 4.2MB。这不是「优化一下」能解决的问题，是形态上的冲突。<br>
+  另外百词斩自己的用户测评里也反复提到「容易记图不记词」「眼熟但说不出意思」，这套机制有它自己的代价。</p>
+</div>
+<div class="item no">
+  <h3>影视原声例句（不背单词式 150 万条）<span class="tag t-no">不做</span></h3>
+  <p class="why"><b>理由</b>：双重不可行 —— 影视台词的版权不可能拿到，音频体积同样压不进单文件产物。词匠的替代路径已经有了：Tatoeba 例句（四六级 94–98% 覆盖）+ 文章精读提供的<b>真实语境</b>，这条组合其实覆盖了同一个需求。</p>
+</div>
+<div class="item no">
+  <h3>云同步 / 打卡社区 / 组队 / PK / 排行榜 <span class="tag t-no">不做</span></h3>
+  <p class="why"><b>理由</b>：这五项全部需要账号体系与服务端，与「离线可用 + 数据不上传」两条硬约束直接冲突。要做其中任何一项，词匠就不再是词匠了。<br>
+  <b>替代方案已在 P1 里给出</b>：本地连续天数 + 里程碑徽章。用户真正想要的是「不想断签」的推动力，不是「看见别人的排名」。</p>
+</div>
+<div class="item no">
+  <h3>真题考频 / 考义高亮（不背单词式 17 万条）<span class="tag t-no">不做</span></h3>
+  <p class="why"><b>理由</b>：需要历年四六级真题语料，版权受限；且获取到的语料质量无法保证。这一项的价值确实高，但走不通，只能放弃。文章精读用的是公开媒体正文，这条路径是干净的。</p>
+</div>
+<div class="item no">
+  <h3>AI 问答 / 自动造句 / 发音打分 <span class="tag t-no">不做</span></h3>
+  <p class="why"><b>理由</b>：全部需要联网调用模型，违反离线约束。发音打分还需要声学模型，体积和性能都不现实。</p>
+</div>
+
+<h2>六、如果只做三件事</h2>
+<div class="note">
+  <b>词汇量测试 + 考试倒计时反推 + 听力题型。</b><br><br>
+  这三个补在三个真实的断点上：<br>
+  · <b>「学之前不知道该从哪开始、每天学多少」</b> → 词汇量测试 + 倒计时反推（P0-1、P0-2，两项加起来是一个完整闭环）<br>
+  · <b>「学的时候听力完全练不到」</b> → 听力题型（P0-3，六级最大权重的一块）<br>
+  · <b>「背完了不知道离目标还差多远」</b> → 倒计时反推里的完成度预测<br><br>
+  三项<b>全部是零联网、不碰数据层、不动记忆算法</b>的改动，改动面小、回归风险低，而且补上的恰好是市面产品靠「联网 + 云数据」才能做到、而词匠靠本地数据同样能做到的部分。<br><br>
+  第四项 <b>形近词辨析</b> 单独说明它的特殊性：它是唯一一个<b>能绕开数据天花板</b>的功能 —— 近义词辨析和搭配卡在 13–15% 是因为源语料不够，而形近词是从词形直接算出来的，想扩多少有多少。如果时间允许，它应该和上面三项一起做。
+</div>
+
+<footer>
+  词匠 WordForge · 功能差距分析 ｜ 2026-09-18 ｜
+  市面信息来自各产品官方页面、应用商店介绍与第三方实测横评（2026-09 检索）；词匠现状来自源码实测盘点（8 视图 / CFG_DEF 60+ 项 / 24027 词条）。
+</footer>
+
+</div>
+</body>
+</html>

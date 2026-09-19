@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 词匠 WordForge —— WebView 外壳
+     只申请一个权限：INTERNET。
+     应用里需要联网的只有「文章精读」这一个模块（从维基媒体 / 维基文库 / 卫报开放平台取公开文章），
+     背单词 / 词库 / 统计 / 设置全部离线，数据只落在应用私有的 localStorage 里。
+     应用内的「设置 → 文章精读」有一键关闭联网的开关，关掉之后整个应用一个请求都不会发。
+     刻意不申请任何存储权限：导出备份走系统 SAF（ACTION_CREATE_DOCUMENT），由用户自己挑位置。 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.local.wordforge">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:label="词匠"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:hardwareAccelerated="true"
+        android:supportsRtl="true"
+        android:usesCleartextTraffic="false"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+
+        <activity
+            android:name="com.local.wordforge.MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode|density|fontScale"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

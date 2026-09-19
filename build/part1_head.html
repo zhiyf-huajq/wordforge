@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dawn" data-mode="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>词匠 WordForge · 离线背单词</title>
+<style>
+/* ============ 主题变量 ============ */
+:root{
+  --r-s:6px; --r-m:10px; --r-l:16px; --r-xl:22px;
+  --fs-base:15px; --lh:1.65;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Source Han Sans SC", sans-serif;
+  --serif: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+  --mono: "SF Mono", "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+  --word-font: var(--sans);
+  --dur:.18s;
+}
+html[data-theme="dawn"]{ /* 晨雾 · 默认浅色 */
+  --bg:#f4f6fa; --bg-soft:#eaeef5; --panel:#ffffff; --panel-2:#f7f9fc; --panel-3:#eef2f8;
+  --border:#e1e6ef; --border-strong:#cdd6e4;
+  --text:#1c2430; --text-dim:#5b6779; --text-faint:#95a0b3;
+  --accent:#3b6ef5; --accent-2:#2f5fe0; --accent-soft:#e6edff; --accent-text:#ffffff;
+  --ok:#12a06a; --ok-soft:#e2f6ee; --warn:#d98217; --warn-soft:#fdf1e0; --bad:#e0483c; --bad-soft:#fdeceb;
+  --gold:#c9942b; --shadow:0 1px 2px rgba(24,38,64,.05),0 6px 20px rgba(24,38,64,.07);
+}
+html[data-theme="paper"]{ /* 纸墨 · 暖色浅色 */
+  --bg:#f7f4ed; --bg-soft:#efe9dc; --panel:#fffdf8; --panel-2:#faf6ee; --panel-3:#f2ece0;
+  --border:#e6ddca; --border-strong:#d5c9b0;
+  --text:#2c2620; --text-dim:#6b6255; --text-faint:#a2988a;
+  --accent:#b4622a; --accent-2:#9c5122; --accent-soft:#f8e8db; --accent-text:#fff;
+  --ok:#4d8a45; --ok-soft:#e8f2e4; --warn:#c58a1c; --warn-soft:#fbf0d9; --bad:#c0453a; --bad-soft:#f9e7e4;
+  --gold:#b8892f; --shadow:0 1px 2px rgba(70,55,30,.06),0 6px 18px rgba(70,55,30,.08);
+}
+html[data-theme="forest"]{ /* 林间 · 护眼浅绿 */
+  --bg:#f0f5f0; --bg-soft:#e4ece4; --panel:#ffffff; --panel-2:#f4f8f4; --panel-3:#e9f0e9;
+  --border:#d8e4d8; --border-strong:#c1d3c1;
+  --text:#1e2a22; --text-dim:#566a5c; --text-faint:#8f a3 95;
+  --text-faint:#8fa395;
+  --accent:#2f8f5b; --accent-2:#26784b; --accent-soft:#e0f2e7; --accent-text:#fff;
+  --ok:#2f8f5b; --ok-soft:#e0f2e7; --warn:#c07a12; --warn-soft:#faf0dc; --bad:#cf4436; --bad-soft:#fbe9e6;
+  --gold:#b08a24; --shadow:0 1px 2px rgba(20,50,30,.05),0 6px 18px rgba(20,50,30,.07);
+}
+html[data-theme="sakura"]{ /* 樱花 · 浅粉 */
+  --bg:#fbf5f7; --bg-soft:#f5e9ee; --panel:#ffffff; --panel-2:#fdf8fa; --panel-3:#f8edf1;
+  --border:#f0dde4; --border-strong:#e2c6d1;
+  --text:#2e2228; --text-dim:#75606a; --text-faint:#a8939c;
+  --accent:#d4577f; --accent-2:#bc4469; --accent-soft:#fce7ee; --accent-text:#fff;
+  --ok:#3f9b6b; --ok-soft:#e4f4eb; --warn:#c8842a; --warn-soft:#fbf0dd; --bad:#d0453f; --bad-soft:#fbe9e7;
+  --gold:#c08a3a; --shadow:0 1px 2px rgba(90,40,60,.06),0 6px 18px rgba(90,40,60,.08);
+}
+html[data-theme="midnight"]{ /* 午夜 · 深色 */
+  --bg:#12151b; --bg-soft:#171b23; --panel:#1b2029; --panel-2:#212732; --panel-3:#262d3a;
+  --border:#2c3442; --border-strong:#3b4557;
+  --text:#e8ecf3; --text-dim:#a3aec2; --text-faint:#6f7b90;
+  --accent:#5b8cff; --accent-2:#4a7bf0; --accent-soft:#1e2a44; --accent-text:#fff;
+  --ok:#2fbc86; --ok-soft:#16332a; --warn:#e5a13a; --warn-soft:#362a18; --bad:#f0655a; --bad-soft:#3a1f1d;
+  --gold:#dcb054; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.4);
+}
+html[data-theme="ink"]{ /* 墨黑 · OLED */
+  --bg:#08090b; --bg-soft:#0d0f12; --panel:#111316; --panel-2:#171a1e; --panel-3:#1d2126;
+  --border:#23272d; --border-strong:#333940;
+  --text:#f2f4f6; --text-dim:#9aa2ac; --text-faint:#636b75;
+  --accent:#e8b44a; --accent-2:#d4a13a; --accent-soft:#2a2313; --accent-text:#0a0a0a;
+  --ok:#3ec48f; --ok-soft:#12291f; --warn:#e0a745; --warn-soft:#2b2314; --bad:#ef6a5e; --bad-soft:#301a18;
+  --gold:#e8b44a; --shadow:0 1px 2px rgba(0,0,0,.5),0 8px 30px rgba(0,0,0,.55);
+}
+html[data-theme="ocean"]{ /* 深海 · 深蓝 */
+  --bg:#0c1620; --bg-soft:#101d29; --panel:#14222f; --panel-2:#1a2b3b; --panel-3:#203548;
+  --border:#25394c; --border-strong:#375068;
+  --text:#e6eff7; --text-dim:#9db3c7; --text-faint:#69829a;
+  --accent:#33b0d6; --accent-2:#2899bd; --accent-soft:#12303f; --accent-text:#04191f;
+  --ok:#35c48c; --ok-soft:#11332a; --warn:#e0a63f; --warn-soft:#33280f; --bad:#ee6a60; --bad-soft:#331d1c;
+  --gold:#e5bc55; --shadow:0 1px 2px rgba(0,0,0,.35),0 8px 26px rgba(0,0,0,.45);
+}
+
+/* ============ 基础 ============ */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overscroll-behavior-x:none}
+body{
+  font-family:var(--sans);font-size:var(--fs-base);line-height:var(--lh);
+  background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;overflow:hidden;
+}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:9px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-faint)}
+::-webkit-scrollbar-track{background:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+/* ============ 布局 ============ */
+#app{display:flex;height:100vh;height:100dvh;overflow:hidden}
+#side{
+  width:224px;flex:0 0 224px;background:var(--panel);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;padding:18px 12px;gap:4px;overflow-y:auto;
+}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 8px 16px}
+.brand-mark{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;flex:0 0 34px;box-shadow:var(--shadow)}
+.brand-mark svg{width:19px;height:19px}
+.brand-txt b{display:block;font-size:15.5px;letter-spacing:.4px;line-height:1.25}
+.brand-txt span{font-size:10.5px;color:var(--text-faint);letter-spacing:1.4px;text-transform:uppercase}
+.nav-sec{font-size:10.5px;color:var(--text-faint);letter-spacing:1.2px;padding:14px 10px 5px;font-weight:600}
+.nav{
+  display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--r-m);
+  color:var(--text-dim);font-size:14px;font-weight:500;transition:background var(--dur),color var(--dur);width:100%;text-align:left;
+}
+.nav:hover{background:var(--panel-2);color:var(--text)}
+.nav.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav svg{width:17px;height:17px;flex:0 0 17px}
+.nav .badge{margin-left:auto;background:var(--bad);color:#fff;font-size:10.5px;padding:1px 6px;border-radius:9px;font-weight:700;line-height:1.5}
+.nav.on .badge{background:var(--accent);color:var(--accent-text)}
+.side-foot{margin-top:auto;padding:12px 10px 2px;font-size:11px;color:var(--text-faint);line-height:1.7;border-top:1px solid var(--border)}
+
+#main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+#topbar{
+  display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border);
+  background:var(--panel);flex:0 0 auto;min-height:60px;
+}
+#topbar h1{font-size:16.5px;font-weight:650;letter-spacing:.2px}
+#topbar .sub{font-size:12px;color:var(--text-faint);margin-left:2px}
+.tb-sp{flex:1}
+.tb-btn{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:var(--r-m);
+  background:var(--panel-2);border:1px solid var(--border);color:var(--text-dim);font-size:13px;
+  transition:all var(--dur);white-space:nowrap;
+}
+.tb-btn:hover{background:var(--panel-3);color:var(--text);border-color:var(--border-strong)}
+.tb-btn svg{width:15px;height:15px}
+.tb-btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.tb-btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
+#view{flex:1;overflow-y:auto;overflow-x:hidden;padding:22px;scroll-behavior:smooth}
+#view.center{display:flex;align-items:center;justify-content:center}
+
+/* ============ 通用组件 ============ */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-l);padding:18px;box-shadow:var(--shadow)}
+.card+.card{margin-top:16px}
+.card-h{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.card-h h2{font-size:14.5px;font-weight:650;letter-spacing:.2px}
+.card-h .hint{font-size:11.5px;color:var(--text-faint);margin-left:auto}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.row{display:flex;align-items:center;gap:10px}
+.row.wrap{flex-wrap:wrap}
+.sp{flex:1}
+.muted{color:var(--text-dim)}
+.faint{color:var(--text-faint)}
+.tiny{font-size:12px}
+.sm{font-size:13px}
+.b{font-weight:600}
+.mono{font-family:var(--mono)}
+.nowrap{white-space:nowrap}
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;background:var(--panel-3);color:var(--text-dim);font-size:11px;font-weight:500;white-space:nowrap}
+.tag.accent{background:var(--accent-soft);color:var(--accent)}
+.tag.ok{background:var(--ok-soft);color:var(--ok)}
+.tag.warn{background:var(--warn-soft);color:var(--warn)}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.tag.gold{background:var(--warn-soft);color:var(--gold)}
+.tag.pos{font-family:var(--mono);font-weight:600;background:transparent;border:1px solid var(--border-strong);color:var(--text)}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:9px 16px;border-radius:var(--r-m);
+  background:var(--panel-2);border:1px solid var(--border);color:var(--text);font-size:13.5px;font-weight:550;
+  transition:all var(--dur);
+}
+.btn:hover{background:var(--panel-3);border-color:var(--border-strong)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+.btn.primary:hover{background:var(--accent-2);border-color:var(--accent-2)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--text-dim)}
+.btn.ghost:hover{background:var(--panel-2);color:var(--text)}
+.btn.danger{color:var(--bad);border-color:var(--border)}
+.btn.danger:hover{background:var(--bad-soft);border-color:var(--bad)}
+.btn.lg{padding:12px 24px;font-size:15px;border-radius:var(--r-l)}
+.btn.sm{padding:6px 11px;font-size:12.5px}
+.btn svg{width:16px;height:16px}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+
+input[type=text],input[type=number],input[type=search],select,textarea{
+  width:100%;padding:9px 12px;border-radius:var(--r-m);background:var(--panel-2);
+  border:1px solid var(--border);color:var(--text);transition:border-color var(--dur),background var(--dur);
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);background:var(--panel)}
+input[type=number]{font-variant-numeric:tabular-nums}
+input.numin{font-variant-numeric:tabular-nums;letter-spacing:.2px}
+input.numin.bad{border-color:var(--bad);background:var(--bad-soft)}
+input.numin.ok{border-color:var(--ok)}
+/* 非数值的文本输入（.rin，如考试日期 / 卫报 Key）也要有同样的「格式不对」反馈 */
+input.rin.bad{border-color:var(--bad);background:var(--bad-soft)}
+.setrow input.numin{flex:0 0 auto}
+textarea{resize:vertical;min-height:90px;font-family:var(--mono);font-size:12.5px;line-height:1.6}
+label.fld{display:block;margin-bottom:14px}
+label.fld>span{display:block;font-size:12.5px;color:var(--text-dim);margin-bottom:6px;font-weight:550}
+label.fld .desc{font-size:11.5px;color:var(--text-faint);margin-top:5px;line-height:1.5}
+.seg{display:inline-flex;background:var(--panel-3);border-radius:var(--r-m);padding:3px;gap:2px;flex-wrap:wrap}
+.seg button{padding:6px 13px;border-radius:7px;font-size:12.5px;color:var(--text-dim);font-weight:550;transition:all var(--dur)}
+.seg button.on{background:var(--panel);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.seg button:hover:not(.on){color:var(--text)}
+
+.switch{position:relative;display:inline-block;width:42px;height:24px;flex:0 0 42px}
+.switch input{opacity:0;width:0;height:0}
+.switch i{position:absolute;inset:0;background:var(--border-strong);border-radius:24px;transition:background var(--dur);cursor:pointer}
+.switch i::before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform var(--dur);box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.switch input:checked+i{background:var(--accent)}
+.switch input:checked+i::before{transform:translateX(18px)}
+.setrow{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--border)}
+.setrow:last-child{border-bottom:none}
+.setrow-t{flex:1;min-width:0}
+.setrow-t b{display:block;font-size:13.5px;font-weight:600}
+.setrow-t span{display:block;font-size:11.5px;color:var(--text-faint);margin-top:2px;line-height:1.5}
+.setrow-t span.warn,label.fld .desc.warn{color:var(--bad);font-weight:550}
+/* ⚠ 设置行里的下拉不能被它自己的选项撑开 —— 这一条踩过，而且只被截图抓到。
+   根因：`<select>` 的**自动最小尺寸**等于它最宽那个 `<option>` 的宽度（不是它自己的 min-width）。
+   选项里只要有「大学英语六级（6,975 词）」这种长文本，下拉就会撑到 430px 上下并且**拒绝收缩**
+   （flex 项的 min-width:auto 由内容决定），于是把左边的说明挤成「一字一行」：
+   「起点词书」四个字各占一行、后面那段说明竖着排成一条线。
+   为什么隐蔽：结构层、逻辑层、手机视口层全部零报错 —— 因为**没有任何元素溢出视口**，
+   恰恰相反，是左边的文字被压到了最窄，`scrollWidth` 一点没变。只有截图能看见。
+   修法不是调 min-width（那只能设下限、设不了上限），而是：
+   ① 显式 `min-width:0` 解除自动最小尺寸 ② `max-width` 封顶 ③ 窄屏直接换行（见下面的 560px 断点）。 */
+.setrow > select{flex:0 1 auto;min-width:0;max-width:52%}
+
+.pbar{height:7px;background:var(--panel-3);border-radius:7px;overflow:hidden}
+.pbar>i{display:block;height:100%;background:var(--accent);border-radius:7px;transition:width .4s ease}
+.pbar.ok>i{background:var(--ok)}
+.pbar.warn>i{background:var(--warn)}
+
+.empty{text-align:center;padding:52px 20px;color:var(--text-faint)}
+.empty svg{width:44px;height:44px;opacity:.4;margin-bottom:12px}
+.empty b{display:block;font-size:15px;color:var(--text-dim);margin-bottom:6px;font-weight:600}
+
+/* ============ 单词卡 ============ */
+.study-wrap{max-width:820px;margin:0 auto;width:100%}
+.wcard{
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--r-xl);
+  box-shadow:var(--shadow);padding:30px 34px 26px;position:relative;overflow:hidden;
+  /* 学习卡要接管横向滑动（滑回上一条 / 跳下一条），所以这里声明「只有竖向平移」：
+     touch-action 不是给 JS 用的，是给浏览器看的 —— 它告诉浏览器在这块区域里
+     不要擅自做横向的原生手势。不写的话，横向拖动会触发浏览器的「历史返回」手势，
+     整页被导航走（实测在无头里直接跳到 about:blank，真机浏览器同样会）。
+     只加在卡片上，不加在 .study-wrap：统计页那张能左右滑的热力图在里面，
+     加了会把它的横向滚动一起废掉。 */
+  touch-action:pan-y;
+}
+.wcard::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--accent),transparent 70%)}
+.wcard-top{display:flex;align-items:center;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.w-word{font-family:var(--word-font);font-size:clamp(32px,6.4vw,54px);font-weight:700;letter-spacing:-.5px;line-height:1.12;word-break:break-word}
+.w-ipa{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;color:var(--text-dim);font-size:14.5px;font-family:var(--mono)}
+.w-ipa span{display:inline-flex;align-items:center;gap:5px}
+.w-ipa em{font-style:normal;font-size:10.5px;color:var(--text-faint);font-family:var(--sans);letter-spacing:.5px}
+.spk{width:30px;height:30px;border-radius:50%;background:var(--accent-soft);color:var(--accent);display:inline-grid;place-items:center;transition:all var(--dur);flex:0 0 30px}
+.spk:hover{background:var(--accent);color:var(--accent-text)}
+.spk svg{width:15px;height:15px}
+.w-sep{height:1px;background:var(--border);margin:20px 0}
+.w-def{font-size:17px;line-height:1.85}
+.w-def .pos{color:var(--accent);font-weight:700;font-family:var(--mono);font-size:13.5px;margin-right:6px}
+.w-def div+div{margin-top:6px}
+.w-en{font-size:13.5px;color:var(--text-dim);line-height:1.7;margin-top:12px;padding-left:12px;border-left:2px solid var(--border-strong)}
+.w-block{margin-top:16px}
+.w-block .bt{font-size:11.5px;color:var(--text-faint);letter-spacing:1px;font-weight:700;margin-bottom:6px}
+.w-ex{font-size:14.5px;line-height:1.75}
+.w-ex .en{color:var(--text)}
+.w-ex .zh{color:var(--text-dim);font-size:13.5px;margin-top:3px}
+.w-ex mark{background:var(--accent-soft);color:var(--accent);font-weight:650;border-radius:3px;padding:0 2px}
+.w-dis{font-size:13px;line-height:1.8;padding-left:12px;border-left:2px solid var(--border-strong)}
+.w-dis .ti{font-weight:700;color:var(--text);margin-bottom:4px}
+.w-dis .ln{color:var(--text-dim)}
+
+/* 跳转入口：词形变化 / 固定搭配 的小标题与标签都可点 */
+.w-block .bt.jump{display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:color var(--dur)}
+.w-block .bt.jump:hover{color:var(--accent)}
+.w-block .bt.jump .jgo{font-size:11px;font-weight:700;letter-spacing:0;color:var(--accent)}
+.tag.lnk{cursor:pointer;border:1px solid var(--border-strong);background:var(--panel-2);transition:all var(--dur)}
+.tag.lnk:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+/* 巧记（卡片最后一栏） */
+.w-mn{display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.7}
+.w-mn .mnrow{display:flex;gap:10px;align-items:baseline}
+.w-mn .mnk{flex:0 0 32px;font-size:10.5px;font-weight:700;letter-spacing:1px;color:var(--text-faint);padding-top:3px}
+.w-mn .mnv{flex:1;min-width:0;color:var(--text-dim);word-break:break-word}
+.w-mn .mnv.hl{color:var(--text);font-weight:550}
+.w-mn .mnv.hl{font-family:var(--mono);font-size:12.5px}
+
+/* 跳转页：词条详情 / 词形变化 / 固定搭配 */
+.jhead{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.jcrumb{font-size:11.5px;color:var(--text-faint);letter-spacing:1px;font-weight:700}
+.jtitle{margin:2px 0 16px}
+.jtitle .jw{font-family:var(--word-font);font-size:34px;font-weight:700;letter-spacing:-.4px;line-height:1.15;word-break:break-word}
+.jtab{display:inline-flex;background:var(--panel-3);border-radius:var(--r-m);padding:3px;gap:2px;margin-bottom:4px;flex-wrap:wrap}
+.jtab button{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:7px;font-size:12.5px;color:var(--text-dim);font-weight:550;transition:all var(--dur)}
+.jtab button i{font-style:normal;font-size:10px;color:var(--text-faint);font-family:var(--mono)}
+.jtab button.on{background:var(--panel);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.jtab button:hover:not(.on){color:var(--text)}
+.jgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:10px}
+.jcard{display:flex;flex-direction:column;gap:3px;text-align:left;padding:13px 15px;border-radius:var(--r-m);
+  background:var(--panel-2);border:1.5px solid var(--border);transition:all var(--dur);width:100%}
+.jcard .jk{font-size:10.5px;color:var(--text-faint);letter-spacing:1px;font-weight:700}
+.jcard .jv{font-size:17px;font-weight:650;font-family:var(--mono);word-break:break-word}
+.jcard .jc{font-size:11.5px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.jcard.lnk{cursor:pointer}
+.jcard.lnk:hover{border-color:var(--accent);background:var(--accent-soft)}
+.jcard.lnk:hover .jv{color:var(--accent)}
+.jgo2{font-style:normal;color:var(--accent)}
+.jnote{margin-top:12px;line-height:1.75}
+.jcolls{display:flex;flex-direction:column}
+.jcoll{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--border)}
+.jcoll:last-child{border-bottom:none}
+.jcoll .jt{font-size:15px;font-family:var(--mono);color:var(--text-dim);word-break:break-word}
+.jcoll .jt em{font-style:normal;font-weight:700;color:var(--accent)}
+.jcoll.on{background:var(--accent-soft);border-radius:var(--r-m);padding-left:12px;padding-right:8px}
+.jcoll.on .jt{color:var(--text)}
+
+/* 词书详情页：点开一本词书，逐个列出它包含的单词 */
+.bklist{display:flex;flex-direction:column;gap:2px}
+.brow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 11px;border:0;
+  background:transparent;border-radius:var(--r-m);cursor:pointer;color:var(--text);font:inherit;
+  font-size:13px;line-height:1.5}
+.brow:hover{background:var(--panel-3)}
+.brow .bw{flex:0 0 auto;min-width:92px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-family:var(--word-font);font-weight:700;font-size:14px}
+.brow .bp{flex:0 0 auto;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--text-faint);font-size:11.5px;font-family:var(--mono)}
+.brow .bc{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-dim)}
+.brow .jgo2{flex:0 0 auto}
+.bwtag{flex:0 0 auto;font-size:10.5px;line-height:1.75;padding:0 8px;border-radius:20px;
+  border:1px solid var(--border);color:var(--text-faint);white-space:nowrap}
+.bwtag.due{color:var(--warn);border-color:var(--warn)}
+.bwtag.ok{color:var(--ok);border-color:var(--ok)}
+.bwtag.ing{color:var(--accent);border-color:var(--accent)}
+
+/* 易混词页：一组形近词是一小块，块内逐行列出「词 + 音标 + 释义 + 学习状态」。
+   用分隔线切块而不是每块套一张卡片 —— 一屏里可能有几十组，
+   几十张带边框和投影的卡片会把页面切得七零八落，反而看不出「这是一组」。 */
+.cfgs{display:flex;flex-direction:column}
+.cfg{padding:13px 0;border-top:1px solid var(--border)}
+.cfg:first-child{border-top:0;padding-top:2px}
+.cfg-h{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.cfg-h .sp{flex:1}
+.cfw{display:flex;align-items:center;gap:5px}
+.cfw-main{
+  display:flex;align-items:center;gap:10px;flex:1;min-width:0;text-align:left;
+  padding:8px 10px;border:0;background:transparent;border-radius:var(--r-m);
+  cursor:pointer;color:var(--text);font:inherit;font-size:13px;line-height:1.5;
+  transition:background var(--dur);
+}
+.cfw-main:hover{background:var(--panel-3)}
+.cfw-w{flex:0 0 auto;font-family:var(--word-font);font-weight:700;font-size:14.5px}
+.cfw-p{flex:0 0 auto;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:var(--text-faint);font-size:11.5px;font-family:var(--mono)}
+.cfw-c{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-dim)}
+.cfw-say{flex:0 0 auto;padding:5px 8px}
+
+/* ---------- 词汇量测试 ----------
+   页面上只有三样东西：进度、一个词、两个按钮。字号和留白都往大了给 ——
+   这一页的使用场景是「快速判断」，元素一多就会让人开始思考而不是凭直觉。 */
+.vlbar{height:6px;border-radius:99px;background:var(--panel-3);overflow:hidden}
+.vlbar > i{display:block;height:100%;border-radius:99px;background:var(--accent);transition:width .35s}
+.vlask{padding-top:22px}
+.vlword{
+  text-align:center;font-family:var(--word-font);font-weight:800;
+  font-size:clamp(30px,9vw,52px);line-height:1.2;letter-spacing:.5px;
+  margin:20px 0 30px;word-break:break-word;
+}
+/* 两个按钮等宽并排。**必须等宽**：一宽一窄会暗示「有一个是更该点的」，
+   而这个测试最怕的就是用户被界面引导着作答。 */
+.vlbtns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vlbtn{padding:17px 10px;font-size:16.5px;font-weight:600;justify-content:center}
+.vlbtn.no{color:var(--text-dim)}
+.vlest{text-align:center;margin:6px 0 10px;font-family:var(--word-font);line-height:1}
+.vlest b{font-size:clamp(40px,13vw,64px);font-weight:800;letter-spacing:-1px}
+.vlest span{font-size:15px;color:var(--text-faint);margin-left:7px}
+
+.blurred{filter:blur(9px);user-select:none;pointer-events:none;transition:filter .22s}
+.reveal{text-align:center;padding:26px 0 8px;color:var(--text-faint);font-size:13px}
+
+.opts{display:grid;gap:10px;margin-top:20px}
+.opt{
+  display:flex;align-items:center;gap:13px;padding:14px 17px;border-radius:var(--r-m);
+  background:var(--panel-2);border:1.5px solid var(--border);text-align:left;font-size:15px;
+  transition:all var(--dur);width:100%;
+}
+.opt:hover{border-color:var(--border-strong);background:var(--panel-3)}
+.opt .k{width:23px;height:23px;border-radius:6px;background:var(--panel);border:1px solid var(--border-strong);display:grid;place-items:center;font-size:11.5px;font-weight:700;color:var(--text-faint);flex:0 0 23px;font-family:var(--mono)}
+.opt.right{border-color:var(--ok);background:var(--ok-soft)}
+.opt.right .k{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.opt.wrong .k{background:var(--bad);color:#fff;border-color:var(--bad)}
+.opt.dim{opacity:.5}
+.opt:disabled{cursor:default}
+
+.grade{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:16px}
+.gbtn{padding:12px 6px;border-radius:var(--r-m);border:1.5px solid var(--border);background:var(--panel-2);text-align:center;transition:all var(--dur)}
+.gbtn b{display:block;font-size:14px;font-weight:650}
+.gbtn span{display:block;font-size:10.5px;color:var(--text-faint);margin-top:3px}
+.gbtn .kd{display:inline-block;font-size:9.5px;font-family:var(--mono);border:1px solid var(--border-strong);border-radius:3px;padding:0 3px;margin-left:4px;color:var(--text-faint);vertical-align:1px}
+.gbtn[data-g="0"]:hover{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.gbtn[data-g="1"]:hover{border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+.gbtn[data-g="2"]:hover{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.gbtn[data-g="3"]:hover{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+
+.spell-box{margin-top:20px}
+.spell-hint{display:flex;justify-content:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.spell-hint i{font-style:normal;font-family:var(--mono);font-size:23px;font-weight:700;width:26px;text-align:center;border-bottom:2px solid var(--border-strong);padding-bottom:3px;letter-spacing:0}
+.spell-hint i.given{color:var(--text)}
+.spell-hint i.blank{color:var(--text-faint)}
+.spell-input{
+  font-family:var(--mono);font-size:26px;text-align:center;letter-spacing:5px;padding:15px;
+  background:var(--panel-2);border:2px solid var(--border);border-radius:var(--r-m);
+}
+.spell-input:focus{border-color:var(--accent)}
+.spell-input.ok{border-color:var(--ok);background:var(--ok-soft)}
+.spell-input.no{border-color:var(--bad);background:var(--bad-soft);text-decoration:line-through}
+
+.underbar{display:flex;align-items:center;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid var(--border);flex-wrap:wrap}
+.dots{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--border-strong);transition:all var(--dur)}
+.dot.cur{width:20px;border-radius:7px;background:var(--accent)}
+.dot.g0{background:var(--bad)}.dot.g1{background:var(--warn)}.dot.g2{background:var(--accent)}.dot.g3{background:var(--ok)}
+/* 滑动手势的提示：只在窄屏（手机）显示 —— 桌上用鼠标的人不会去「滑」，
+   显示出来只会多一行噪音，还会牵动桌面端的截图基线。 */
+.swipehint{display:none;margin-top:10px;font-size:11.5px;color:var(--text-faint);text-align:center;letter-spacing:.2px}
+.swipehint b{color:var(--text-dim);font-weight:600}
+
+/* ============ 统计 ============ */
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-l);padding:16px 18px;box-shadow:var(--shadow)}
+.stat .lb{font-size:11.5px;color:var(--text-faint);letter-spacing:.4px;font-weight:600}
+.stat .vl{font-size:27px;font-weight:700;letter-spacing:-.5px;margin-top:3px;line-height:1.2}
+.stat .vl small{font-size:13px;font-weight:550;color:var(--text-faint);margin-left:2px}
+.stat .ex{font-size:11.5px;color:var(--text-faint);margin-top:3px}
+/* 考试倒计时条：只用左侧一条色条区分「来得及 / 要加量」，
+   不整块上色 —— 否则今日目标环和四个统计卡的视觉层级会被它压过去。 */
+.exambar{display:flex;align-items:center;gap:18px;flex-wrap:wrap;border-left:3px solid var(--ok);margin-bottom:16px}
+.exambar.over{border-left-color:var(--warn);background:var(--warn-soft)}
+.examnum{text-align:center;min-width:70px}
+.examnum b{display:block;font-size:30px;font-weight:700;line-height:1.05;letter-spacing:-1px}
+.examnum span{font-size:11px;color:var(--text-faint)}
+.examttl{font-size:14.5px;font-weight:550}
+/* 设置行里的校验失败提示：只染文字不染背景，免得和 .setrow 的分隔线打架 */
+.badtxt{color:var(--bad);font-weight:600}
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,12px);gap:3px;justify-content:start}
+.heat i{width:12px;height:12px;border-radius:3px;background:var(--panel-3)}
+.heat i.l1{background:var(--accent);opacity:.3}
+.heat i.l2{background:var(--accent);opacity:.52}
+.heat i.l3{background:var(--accent);opacity:.76}
+.heat i.l4{background:var(--accent);opacity:1}
+.bars{display:flex;align-items:flex-end;gap:3px;height:132px;padding-top:8px}
+.bars .bar{flex:1;background:var(--accent);border-radius:3px 3px 0 0;min-height:2px;opacity:.85;position:relative;transition:opacity var(--dur)}
+.bars .bar:hover{opacity:1}
+.bars .bar span{position:absolute;bottom:-19px;left:50%;transform:translateX(-50%);font-size:9.5px;color:var(--text-faint);white-space:nowrap}
+
+.ring{position:relative;display:grid;place-items:center}
+.ring svg{transform:rotate(-90deg)}
+.ring .ctr{position:absolute;text-align:center}
+.ring .ctr b{display:block;font-size:23px;font-weight:700;letter-spacing:-.5px;line-height:1.1}
+.ring .ctr span{font-size:10.5px;color:var(--text-faint)}
+
+.legend{display:flex;flex-direction:column;gap:9px}
+.legend .li{display:flex;align-items:center;gap:9px;font-size:13px}
+.legend .dot2{width:9px;height:9px;border-radius:3px;flex:0 0 9px}
+.legend .li b{margin-left:auto;font-weight:650;font-variant-numeric:tabular-nums}
+
+/* ============ 表格 / 列表 ============ */
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;font-size:11.5px;color:var(--text-faint);font-weight:650;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--panel-2)}
+.tbl .num{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);font-size:12px}
+
+.wlist{display:flex;flex-direction:column}
+.wrow{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--border)}
+.wrow:last-child{border-bottom:none}
+.wrow .wn{font-weight:650;font-size:15px;min-width:0}
+.wrow .wt{font-size:12.5px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wrow .wn .ipa{font-size:11.5px;color:var(--text-faint);font-weight:400;font-family:var(--mono);margin-left:7px}
+
+.bookcard{
+  background:var(--panel);border:1px solid var(--border);border-radius:var(--r-l);padding:16px;
+  box-shadow:var(--shadow);transition:all var(--dur);text-align:left;cursor:pointer;position:relative;
+}
+.bookcard:hover{border-color:var(--accent);transform:translateY(-2px)}
+.bookcard .bt{display:flex;align-items:center;gap:8px;font-weight:650;font-size:14.5px;margin-bottom:3px}
+.bookcard .bd{font-size:11.5px;color:var(--text-faint);margin-bottom:11px;min-height:17px}
+.bookcard .meta{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--text-faint);margin-top:8px}
+.bookcard.cur{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft),var(--shadow)}
+.bookcard .bd.binc{color:var(--accent);font-weight:600;margin-top:-5px}
+.bookcard .bmore{margin-top:9px;font-size:11px;color:var(--text-faint);letter-spacing:.3px;transition:color var(--dur)}
+.bookcard:hover .bmore{color:var(--accent)}
+
+/* ============ 弹窗 ============ */
+.mask{position:fixed;inset:0;background:rgba(14,20,30,.45);backdrop-filter:blur(3px);z-index:900;display:flex;align-items:center;justify-content:center;padding:22px;opacity:0;pointer-events:none;transition:opacity .2s}
+.mask.on{opacity:1;pointer-events:auto}
+.modal{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-xl);box-shadow:0 24px 70px rgba(0,0,0,.3);width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;transform:scale(.96) translateY(8px);transition:transform .2s}
+.mask.on .modal{transform:none}
+.modal.wide{max-width:760px}
+.modal-h{display:flex;align-items:center;gap:10px;padding:18px 22px;border-bottom:1px solid var(--border);flex:0 0 auto}
+.modal-h b{font-size:15.5px;font-weight:650}
+.modal-h .x{margin-left:auto;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--text-faint)}
+/* ⚠ 里面的图标必须显式给尺寸。带 viewBox 的 svg 元素在 CSS 里 width/height 都是 auto 时，
+   它有自己的一套固有尺寸推导（远大于 30px），绝不是「撑满父容器」——
+   于是这颗 × 会以约 83px 渲染出来，从 30px 的按钮里溢出去，还探到弹窗右上角外面。
+   这个缺陷在所有弹窗上都存在（桌面端一样），只是平时不盯着看不会注意。
+   本文件里每一个用到图标的地方都写了尺寸，唯独这里漏了，现在补齐。 */
+.modal-h .x svg{width:16px;height:16px}
+.modal-h .x:hover{background:var(--panel-2);color:var(--text)}
+.modal-b{padding:20px 22px;overflow-y:auto;flex:1}
+.modal-f{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:9px;justify-content:flex-end;flex:0 0 auto}
+
+/* 底部抽屉（手机底栏的「更多」用它承载次要入口）。
+   复用同一个 #mask/#modal，只加 .sheet 变体：让弹窗贴底、扇出，像 iOS/微信的分享面板。
+   注意 CSS 顺序 —— 这几条必须写在 .mask.on .modal{transform:none} 之后，
+   否则同权重下会被它覆盖，抽屉的入场位移就失效了。 */
+.mask.sheet{align-items:flex-end;padding:0}
+.mask.sheet .modal{max-width:640px;border-radius:var(--r-xl) var(--r-xl) 0 0;transform:translateY(18px);padding-bottom:env(safe-area-inset-bottom)}
+.mask.sheet.on .modal{transform:none}
+.msheet{display:flex;flex-direction:column;gap:7px}
+.msheet button{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border-radius:var(--r-m);background:var(--panel-2);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:14.5px;font-weight:550;text-align:left;cursor:pointer;transition:all var(--dur)}
+.msheet button svg{width:20px;height:20px;color:var(--text-faint);flex:0 0 20px}
+.msheet button small{margin-left:auto;color:var(--text-faint);font-size:11.5px;font-weight:500;text-align:right}
+.msheet button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.msheet button.on svg{color:var(--accent)}
+.msheet button:active{transform:scale(.985)}
+
+#toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);z-index:1200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--text);color:var(--bg);padding:10px 20px;border-radius:24px;font-size:13.5px;font-weight:550;box-shadow:0 8px 28px rgba(0,0,0,.28);animation:tin .25s ease;max-width:86vw;text-align:center}
+.toast.ok{background:var(--ok);color:#fff}
+.toast.bad{background:var(--bad);color:#fff}
+@keyframes tin{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ============ 移动端 ============ */
+#mtab{display:none}
+@media(max-width:900px){
+  #app{flex-direction:column}
+  #side{display:none}
+  #topbar{padding:10px 14px;min-height:54px;gap:9px}
+  #topbar h1{font-size:15px}
+  #topbar .sub{display:none}
+  #view{padding:14px 14px 88px}
+  #mtab{
+    display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--panel);
+    border-top:1px solid var(--border);z-index:500;
+    padding:4px 5px calc(4px + env(safe-area-inset-bottom));
+    box-shadow:0 -8px 22px rgba(0,0,0,.06);
+  }
+  /* 底栏按钮：手机上的主要导航，必须「一指能点到、按下去有反应」。
+     原来 8 个挤一行，360px 屏每个只有 44px 宽、10px 字、还没有按压反馈 ——
+     又挤又像坏的。现在 5 个（4 主 + 更多），每个 ~70px 宽、50px 高，
+     达到 48px 最小触摸目标；:active 给缩放 + 底色，点了马上有回应。 */
+  #mtab button{
+    flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    min-height:50px;padding:7px 4px;border-radius:11px;position:relative;
+    color:var(--text-faint);font-size:11px;font-weight:600;font-family:inherit;
+    cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+    transition:background var(--dur),color var(--dur),transform .12s;
+  }
+  #mtab button svg{width:21px;height:21px;flex:0 0 auto}
+  #mtab button.on{color:var(--accent)}
+  #mtab button.on::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:24px;height:2.5px;border-radius:0 0 3px 3px;background:var(--accent)}
+  #mtab button.has-due::after{content:"";position:absolute;top:7px;right:calc(50% - 17px);width:7px;height:7px;border-radius:50%;background:var(--bad);border:1.5px solid var(--panel)}
+  #mtab button:active{background:var(--panel-3);transform:scale(.93)}
+  /* toast 原来固定在 bottom:26px，正好压在底栏上；手机上整体上移到底栏之上 */
+  #toast{bottom:calc(72px + env(safe-area-inset-bottom))}
+  .swipehint{display:block}
+
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .grade{grid-template-columns:repeat(2,1fr)}
+  .wcard{padding:22px 18px 20px;border-radius:var(--r-l)}
+  .grid.g3.keep,.grid.g4.keep{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .grid.g3.keep,.grid.g4.keep{grid-template-columns:1fr}
+  /* 词书列表在窄屏让位给单词与释义，音标先收起来 */
+  .brow .bp{display:none}
+  .brow .bw{min-width:72px;font-size:13.5px}
+  /* 易混词页同理：360px 上「词 + 音标 + 释义 + 状态」四段挤不下，
+     音标先让位 —— 这一页要看的是「哪几个词长得像」，音标不是重点。 */
+  .cfw-p{display:none}
+  .cfg-h .tag{font-size:10px}
+  /* 手机上设置行一律「说明占一行、控件另起一行」，不再硬挤。
+     根因：右侧这几类控件都有**不可压缩的最小宽度** ——
+     下拉的最小宽度甚至等于「它最宽那个选项」的宽度（约 430px），
+     分段按钮（.seg）的最小宽度也不肯缩到它的按钮之下。
+     360px 屏上硬挤的后果是左侧说明被啃到 1 个字宽：
+     实测「学习顺序」那行说明只剩 47px（占 0.16）、「默认辅助档位」只剩 19px（占 0.06）。
+     为什么一直没发现：溢出诊断**完全看不见**这种坏法 —— 没有任何元素超出视口，
+     scrollWidth 一点没变，恰恰相反是文字被压到了最窄。
+     做法：说明行 flex-basis 给 60%，控件给 100%，两者相加大于一行 → 控件被顶到第二行；
+     只含开关的行（开关固定 42px）仍然同行显示，不白占纵向空间。 */
+  .setrow{flex-wrap:wrap;gap:9px}
+  .setrow-t{flex:1 1 60%;min-width:0}
+  .setrow > select,
+  .setrow > .seg,
+  .setrow > input{flex:1 1 100%;max-width:100%}
+}
+@media print{ #side,#topbar,#mtab{display:none} }
+.hide{display:none!important}
+
+/* ===================== 文章精读 ===================== */
+.rtabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.rtab{border:1px solid var(--border);background:var(--panel-2);color:var(--text-dim);padding:6px 14px;border-radius:999px;font-size:13px;cursor:pointer;font-family:inherit;transition:all var(--dur)}
+.rtab.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+/* 中国英文媒体：源一共就六个，用芯片平铺比塞进下拉框直观 —— 一眼看全，
+   也不用先点开才知道有哪些可选。绿色标签说明这组源大陆网络下实测连得上。 */
+.cntag{font-size:10.5px;font-weight:600;background:var(--ok-soft);color:var(--ok);border-radius:5px;padding:1.5px 7px;margin-left:5px;vertical-align:1.5px;letter-spacing:.2px}
+/* 中国英文媒体这一块的标题要一条分隔线。
+   精读页原来的分区标题（.secttl）没有任何间距样式，几块内容上下紧贴，
+   而这一组和它上面那组恰好是「多半连不上」与「实测连得上」的正反两面 ——
+   不划开的话，用户会把两批源当成一回事。只在这里加线，不动其它区块的既有版式。 */
+.cnsec{margin-top:16px;padding-top:13px;border-top:1px solid var(--border)}
+.cchips{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 0}
+.cchip{border:1px solid var(--border);background:var(--panel-2);color:var(--text-dim);padding:5px 12px;border-radius:999px;font-size:12.5px;font-family:inherit;cursor:pointer;transition:all var(--dur)}
+.cchip:hover{border-color:var(--accent);color:var(--text)}
+.cchip.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+/* 联网状态条：这个功能依赖网络，状态必须一眼可见，不能让人对着空白页猜 */
+.rnet{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:8px 12px;border-radius:var(--r-m);background:var(--panel-2);border:1px solid var(--border);font-size:12.5px;margin-bottom:10px}
+.rnet i{width:8px;height:8px;border-radius:50%;background:var(--text-faint);flex:0 0 auto}
+.rnet.on i{background:var(--ok)}
+.rnet.off i{background:var(--bad)}
+.rnet b{font-weight:600}
+.rnet span{color:var(--text-faint)}
+.rmsg{padding:9px 12px;border-radius:var(--r-m);font-size:12.5px;line-height:1.7;margin-bottom:10px;border:1px solid transparent}
+.rmsg span{display:block;color:var(--text-faint);margin-top:3px;font-size:12px}
+.rmsg.bad{background:var(--bad-soft);color:var(--bad);border-color:var(--bad)}
+.rmsg.bad span{color:var(--bad);opacity:.8}
+.rmsg.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)}
+.rmsg.info{background:var(--warn-soft);color:var(--warn)}
+.rtest{border:1px dashed var(--border);border-radius:var(--r-m);padding:10px 12px;margin-bottom:10px}
+.rtline{display:flex;align-items:baseline;gap:8px;font-size:12.5px;padding:3px 0;flex-wrap:wrap}
+.rtline b{font-family:var(--mono);font-size:12px;font-weight:500;min-width:140px}
+.rtline span:last-child{color:var(--text-faint);font-size:12px}
+.rtok{width:14px;flex:0 0 auto;font-weight:700}
+.rtok.y{color:var(--ok)}
+.rtok.n{color:var(--bad)}
+.rrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.rsel,.rin,.rta{border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:var(--r-s);padding:6px 9px;font-size:13px;font-family:inherit}
+.rsel{max-width:190px}
+.rin{flex:1 1 170px;min-width:130px}
+.rta{width:100%;min-height:112px;line-height:1.7;resize:vertical;margin-top:6px;font-family:var(--word-font)}
+.rlist{display:grid;gap:8px;margin:8px 0}
+.ritem{border:1px solid var(--border);border-radius:var(--r-m);padding:11px 13px;background:var(--panel-2)}
+.ritem>b{display:block;font-size:14.5px;margin:3px 0;line-height:1.5}
+.rtop{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rbadge{font-size:11px;background:var(--accent-soft);color:var(--accent-2);border-radius:4px;padding:1px 7px}
+.rsrc{font-size:11.5px;color:var(--text-faint)}
+.rmuted{font-size:12.5px;color:var(--text-dim);margin:3px 0 0;line-height:1.65}
+.rec{color:var(--accent-2)}
+.rtitle{font-size:20px;line-height:1.42;margin:10px 0 4px;font-weight:600}
+.rmeta{font-size:12px;color:var(--text-faint);line-height:1.7}
+.rlink{color:var(--accent-2)}
+/* 语言画像：把「这篇对我有多难」量化出来，而不是让用户凭感觉 */
+.rprof{display:flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:var(--r-m);overflow:hidden;margin:10px 0 8px}
+.rpcol{flex:1 1 0;min-width:74px;padding:9px 6px;text-align:center;border-right:1px solid var(--border);background:var(--panel-2)}
+.rpcol:last-child{border-right:0}
+.rpcol b{display:block;font-size:17px;font-weight:600;font-family:var(--mono)}
+.rpcol span{display:block;font-size:11px;color:var(--text-faint);margin-top:2px}
+.rpcol.hot b{color:var(--accent)}
+.rpcol b.stars{font-family:inherit;font-size:14px;color:var(--gold);letter-spacing:1px}
+.rprof.small .rpcol b{font-size:15px}
+.rlevels{font-size:12px;color:var(--text-dim);margin:4px 0 0;line-height:1.7}
+.rassist{gap:6px;margin-top:12px}
+.rlab{font-size:12px;color:var(--text-faint);margin-right:2px}
+.ras{border:1px solid var(--border);background:var(--panel-2);color:var(--text-dim);padding:5px 11px;border-radius:999px;font-size:12.5px;cursor:pointer;font-family:inherit;transition:all var(--dur)}
+.ras.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
+/* 正文排版：行距放宽、段落编号靠左，接近纸质书的阅读密度 */
+.rpara{position:relative;padding-left:32px;margin-bottom:17px}
+.rpnum{position:absolute;left:0;top:5px;width:22px;text-align:right;font-size:10.5px;color:var(--text-faint);font-family:var(--mono)}
+.rtext{font-family:var(--word-font);font-size:17px;line-height:1.95;margin:0;color:var(--text)}
+.rsent{font-family:var(--word-font);font-size:17px;line-height:1.85;margin:0 0 9px;color:var(--text)}
+.rw{cursor:pointer;border-radius:3px;padding:0 1px;transition:background var(--dur)}
+.rw:hover{background:var(--accent-soft)}
+.rw-new{border-bottom:1.5px dashed var(--accent)}
+/* 行内释义：原来写死在 white-space:nowrap，长释义（尤其带「（X 的变形）」尾巴的）
+   在窄屏上会直接撑破正文容器 —— 手机上就是一段文字被裁掉。
+   改成允许换行 + anywhere 断词，短释义依然不会被拆（只有实在放不下才断）；
+   box-decoration-break:clone 保证折成两行时每行的圆角底色都是完整的。 */
+.rcn{font-style:normal;font-size:12px;color:var(--accent-2);background:var(--accent-soft);border-radius:3px;padding:0 4px;margin:0 2px 0 1px;white-space:normal;overflow-wrap:anywhere;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+/* 点词弹窗 */
+.wpop-ph{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--text-dim);font-family:var(--mono);margin-bottom:8px}
+.wpop-ph .pp b{color:var(--text-faint);font-weight:500;margin-right:2px;font-family:var(--sans)}
+.wpop-lem{font-size:12px;color:var(--warn);margin:0 0 8px}
+.wpop-cn p{margin:0 0 4px;font-size:14px;line-height:1.7}
+.wpop-en{font-size:12.5px;color:var(--text-dim);margin:8px 0 0;line-height:1.7}
+.wpop-ex{margin-top:10px}
+.wpop-ex p{margin:0 0 4px;font-size:13px;color:var(--text-dim);line-height:1.7}
+.secttl2{font-size:12px;color:var(--text-faint);margin-bottom:4px}
+.wpop-tags{display:flex;gap:6px;margin-top:10px}
+.rtag{font-size:11px;background:var(--accent-soft);color:var(--accent-2);border-radius:4px;padding:2px 7px}
+.rtag.gray{background:var(--panel-3);color:var(--text-faint)}
+/* 读后练习 */
+.qzc{border-top:1px dashed var(--border);padding:12px 0 5px}
+.qzc:first-of-type{border-top:0;padding-top:2px}
+.qzsen{font-family:var(--word-font);font-size:15.5px;line-height:1.8;margin:0 0 8px}
+.qzrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.qzin{border:1px solid var(--border);background:var(--panel);color:var(--text);border-radius:var(--r-s);padding:6px 10px;font-size:14px;font-family:var(--word-font);min-width:150px}
+.qzin.bad{border-color:var(--bad);background:var(--bad-soft)}
+.qzfb{font-size:12.5px}
+.qzfb.y{color:var(--ok)}
+.qzfb.n{color:var(--bad)}
+.qzhint{font-size:12px;color:var(--text-faint);margin:6px 0 0}
+.qzm{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.qzml,.qzmr{display:grid;gap:6px;align-content:start}
+.qmlb,.qmrb{text-align:left;border:1px solid var(--border);background:var(--panel-2);color:var(--text);border-radius:var(--r-s);padding:8px 10px;font-size:13px;cursor:pointer;font-family:inherit;position:relative;line-height:1.5;transition:all var(--dur)}
+.qmlb b{font-family:var(--word-font);font-size:14.5px}
+.qmlb i{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-left:5px;font-style:normal}
+.qmlb.sel{border-color:var(--accent);background:var(--accent-soft)}
+.qmlb.done,.qmrb.done{border-color:var(--ok);background:var(--ok-soft);cursor:default}
+.qmrb.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.qno{position:absolute;top:-6px;right:-6px;background:var(--ok);color:#fff;font-size:10px;width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%}
+.qzo{margin-bottom:14px}
+.qzohead{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-faint);margin-bottom:6px}
+.qzsent{display:flex;align-items:flex-start;gap:8px;padding:7px 9px;border:1px solid var(--border);border-radius:var(--r-s);background:var(--panel-2);margin-bottom:5px;font-size:13.5px;line-height:1.65}
+.qzsent.good{border-color:var(--ok);background:var(--ok-soft)}
+.qzsent.bad{border-color:var(--bad);background:var(--bad-soft)}
+.qzn{font-family:var(--mono);font-size:11px;color:var(--text-faint);flex:0 0 auto;padding-top:2px}
+.qztx{flex:1 1 auto}
+.qzud{display:flex;flex-direction:column;gap:2px;flex:0 0 auto}
+.qsbtn{border:1px solid var(--border);background:var(--panel);color:var(--text-dim);border-radius:3px;font-size:9px;line-height:1;padding:2px 5px;cursor:pointer;font-family:inherit}
+.qsbtn:hover{border-color:var(--accent);color:var(--accent-2)}
+@media(max-width:560px){
+  .qzm{grid-template-columns:1fr}
+  .rpara{padding-left:24px}
+  .rtext,.rsent{font-size:16px;line-height:1.9}
+  .rpcol{min-width:58px;padding:7px 3px}
+  .rpcol b{font-size:14.5px}
+  .rtline b{min-width:0}
+}
+</style>
+</head>
+<body>

@@ -1,0 +1,31 @@
+{
+  "_说明": [
+    "这是 apk.config.json 的模板。真正的 apk.config.json 已被 .gitignore 排除，",
+    "因为它含签名口令与本机路径。自己打包时：",
+    "  1) 复制本文件为 apk.config.json",
+    "  2) 把下面所有 <...> 占位符改成你机器上的实际值",
+    "  3) 密钥库不存在的话先生成一个（见 README「自己构建 → 打包 APK」）"
+  ],
+
+  "root": ".",
+  "srcDir": "apk-src",
+  "htmlFile": "dist/词匠-离线背单词.html",
+  "apkName": "词匠.apk",
+  "package": "com.local.wordforge",
+  "activity": "com.local.wordforge.MainActivity",
+  "minSdk": 24,
+  "targetSdk": 34,
+  "versionCode": 2,
+  "versionName": "1.1",
+  "allowPermissions": ["android.permission.INTERNET"],
+
+  "_路径说明": "以下是本机环境路径，换成你自己的",
+  "sdk": "<你的 Android SDK 目录，例如 C:/Users/你/AppData/Local/Android/Sdk>",
+  "javaHome": "<你的 JDK 17 目录，例如 C:/Program Files/Java/jdk-17>",
+
+  "_签名说明": "生成新密钥库时口令自己定，别用示例值；这个文件不要提交",
+  "keystore": "apk-src/keystore/wordforge.jks",
+  "keystorePass": "<你自己设的密钥库口令>",
+  "keyAlias": "wordforge",
+  "keystoreDname": "CN=WordForge, OU=Personal, O=Local, L=<城市>, ST=<省份>, C=CN"
+}

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 自适应图标（Android 8+）的背景色。
+         取自应用默认主题 dawn 的主色，让图标与打开后的界面同一个调性。 -->
+    <color name="ic_launcher_bg">#3b6ef5</color>
+</resources>

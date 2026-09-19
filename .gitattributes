@@ -1,0 +1,53 @@
+# 行尾统一为 LF，且不随本机 core.autocrlf 变化。
+#
+# 为什么必须写死：本机 core.autocrlf=true 意味着「提交时 CRLF→LF，检出时 LF→CRLF」。
+# 而 dist/词匠-离线背单词.html 是构建产物，它的**字节数 12144750 和 MD5 是 APK 打包的校验基线**
+# （verify-apk.js 会拿 assets/index.html 跟它比对）。一旦某次 clone / checkout 把 7397 个换行
+# 改成 CRLF，文件就会凭空胖 7397 字节，校验会莫名其妙地红 —— 而代码其实一行没改。
+#
+# 所以：文本一律 `eol=lf`，让工作区在任何机器上都是 LF，产物字节可复现。
+* text=auto eol=lf
+
+# 二进制文件：明确告诉 git 别做任何转换，也别尝试算文本 diff
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.apk   binary
+*.jar   binary
+*.zip   binary
+*.jks   binary
+*.keystore binary
+*.p12   binary
+*.pfx   binary
+*.ttf   binary
+*.otf   binary
+*.woff  binary
+*.woff2 binary
+
+# 生成的单文件产物：体积大、不可读、没有人工编辑价值，diff 出来也没意义
+dist/*.html -diff
+
+# 词库数据是单行巨长的 JSON，diff 会吐出几十万行，同样关掉
+build/data_*.json -diff
+
+# ============================================================
+# 以下这些**必须逐字节原样保存**，不做行尾归一化。
+# 上面那条 `* text=auto eol=lf` 会把 CRLF 改成 LF —— 对源码是好事，
+# 对这些文件却是「偷偷改了内容」：
+#   · 抓下来的网页 / RSS 夹具是「外部世界的快照」，改了行尾等于改了测试依据；
+#   · 语料数据是内容而非源码，凭什么替它决定换行符。
+# 加 `-text` 之后 git 完全不碰它们的字节。
+# ============================================================
+
+# 精读模块的真实网页 / RSS 夹具（verify-cn.js 与 test-logic.js 要读）
+_dev/_cd_*.html   -text
+_dev/_gt_*.html   -text
+_dev/_gt_feed.txt -text
+
+# 语料与人工校对的词表（raw/ 下的小文本）
+raw/*.txt         -text
+
+# 验收留证里的二进制
+*.binarypb binary

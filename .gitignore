@@ -1,0 +1,98 @@
+# ============================================================
+#  词匠 WordForge · 仓库忽略规则
+#  原则：只提交「源码 + 数据资产 + 成品 + 文档」。
+#        原始语料（几百 MB）、构建中间产物、调试临时文件一律不进。
+#        ⚠️ 密钥库（*.jks / *.keystore）**永远不要**提交 ——
+#        它是你的签名身份，一旦公开，别人就能签出「同包名同签名」的包。
+# ============================================================
+
+# ---------- 签名密钥（最重要的一条）----------
+*.jks
+*.keystore
+*.p12
+*.pfx
+apk-src/keystore/
+
+# ---------- 本机配置（含明文密钥口令，绝对不要提交）----------
+# apk.config.json 里有 `keystorePass`、本机 SDK 路径、含城市的签名信息。
+# 密钥库本身已经在上面被排除了，但口令 + 路径同样不该公开：
+#   ① 一旦哪天密钥库被误提交，两半就凑齐了；
+#   ② 本机路径会连用户名和目录结构一起暴露。
+# 仓库里提交的是 apk.config.example.json（占位符版），用的时候复制一份改自己的。
+apk.config.json
+
+# ---------- 原始语料 ----------
+# 大文件排除（几十 MB，且有公开出处、可重新下载）
+raw/ecdict.csv
+raw/npm/
+raw/npm2/
+raw/qwerty/
+# ETL 的中间产物（由上面那些源生成，只在重建整条数据链时才有用）
+# ⚠️ 这里必须写 `raw/prep/*` 而不是 `raw/prep/`。git 的规则是
+#    「若某个目录被排除，则无法再重新包含该目录下的任何文件」——
+#    写成 `raw/prep/` 会让下面那条 `!raw/prep/confuse_curated.json` 静默失效。
+raw/prep/*
+# 反过来：raw 根目录下的小文本（手工校正的四六级词表、词根表、形近词表）
+# 体积都很小且是人工校对成果，全部保留。
+# 同样注意 git 规则是「后面的覆盖前面的」——这一条写在排除规则之后，所以会生效。
+!raw/*.txt
+# 例外中的例外：人工校对表只有 3.3 KB，**没有任何源数据能重新生成它**（丢了就真丢了）。
+# 而且 test-logic.js 的「易混词溯源」断言要靠它 —— 不提交的话，别人 clone 下来
+# 那条断言会被 try/catch 静默跳过，变成一条恒真的假通过。
+!raw/prep/confuse_curated.json
+
+# ---------- 构建中间产物 ----------
+apk-src/build/
+apk-src/res/values/strings.xml
+
+# ---------- 浏览器调试临时文件（每个 11 MB，最占地方）----------
+_dev/_cdp_profile_*/
+_dev/_cdp_probe_*/
+_dev/_mobile_probe_*.html
+_dev/_cnd_probe_*.html
+_dev/_shots/
+_dev/__pycache__/
+_dev/*.log
+_dev/_out_*.log
+
+# ---------- 一次性探针与运行日志 ----------
+# `_dev/` 里的文件分三类，只有第一类才是项目资产：
+#   ① 构建链 + 八层校验脚本 → **保留**（build.js / fix_defs.js / etl.py / prep_*.{js,py} /
+#      dl_*.js / check-*.js / test-logic.js / verify-*.js / shot.js）
+#   ② 校验脚本要读的**真实网页夹具** → **保留**（_cd_art.html / _cd_col.html /
+#      _gt_art.html / _gt_feed.txt —— 夹具解析层（verify-cn.js）靠它们离线跑，
+#      删了 clone 下来会硬失败）
+#   ③ 排查问题时随手写的一次性探针、探查输出、运行日志 → 排除
+_dev/_probe_*
+_dev/probe*
+_dev/inspect*
+_dev/_add_roots.js
+_dev/_rootzh.js
+_dev/_svgcount.js
+_dev/_crop_tab.py
+_dev/check_q.py
+# 运行日志 / 统计快照（跑一次就生成，跑法写在 README 里）
+_dev/*.txt
+# ⚠️ 例外：这是环球时报的真实 RSS 夹具，属于上面第 ② 类，必须留
+!_dev/_gt_feed.txt
+# 早期的数据副本（`build/data_*.json` 才是现行版本，这里是历史遗留，别提交以免两份漂移）
+_dev/data_words.json
+_dev/data_roots.json
+_dev/data_books.json
+# 从产物里抽出来做对照的代码副本、调试裁图
+_dev/_app_extracted.js
+_dev/_tabbar_crop.png
+
+# ---------- 旧版本备份（本地留着可回滚，不进仓库）----------
+_archive/
+_dev/_archive/
+raw/prep/_archive/
+
+# ---------- 系统 / 编辑器杂项 ----------
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~

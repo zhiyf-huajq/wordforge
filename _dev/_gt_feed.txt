@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<rss version="2.0">
+  <channel>
+    <title>outbrain</title>
+    <description>Global Times Outbrain news feed</description>
+    <link>https://www.globaltimes.cn/rssfeeds/outbrain.xml</link>
+    <copyright>Global Times</copyright>
+    <pubDate>Fri, 18 Sep 2026 10:09:16 GMT</pubDate>
+    <docs>http://backend.userland.com/rss</docs>
+    <generator>RSS.NET: http://www.rssdotnet.com/</generator>
+    <item>
+      <title>South Africa freedom day memorial gathering reveals its pursuit of dignity and inclusive governance in post apartheid era</title>
+      <link>https://www.globaltimes.cn/page/202608/1368830.shtml</link>
+      <pubDate>Sun, 23 Aug 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>China to introduce new train timetable from July 1, including high-speed train service between Beijing and Urumqi</title>
+      <link>https://www.globaltimes.cn/page/202606/1363810.shtml</link>
+      <pubDate>Thu, 18 Jun 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Chinese expert criticizes Filipino FM's claim that Japan-Philippines delimitation 'nothing to do' with China, warns move serves ulterior purposes beyond bilateral talks</title>
+      <link>https://www.globaltimes.cn/page/202606/1363326.shtml</link>
+      <pubDate>Thu, 11 Jun 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Tokyo Trial debunks notorious Yasukuni Shrine's inverted narrative</title>
+      <link>https://www.globaltimes.cn/page/202605/1360513.shtml</link>
+      <pubDate>Fri, 08 May 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>DC gala shooting suspect voices grievances against US administration in writings to family: media reports</title>
+      <link>https://www.globaltimes.cn/page/202604/1359873.shtml</link>
+      <pubDate>Tue, 28 Apr 2026 10:36:40 GMT</pubDate>
+    </item>
+    <item>
+      <title>Local Insights: At the 13th Baku Global Forum, global participants look to China for new path of multilateralism and stability</title>
+      <link>https://www.globaltimes.cn/page/202604/1358941.shtml</link>
+      <pubDate>Wed, 15 Apr 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Over 3,000 protests staged across US on one month of strikes against Iran, scale 'suggests mounting public dissatisfaction that risks more chaos': expert</title>
+      <link>https://www.globaltimes.cn/page/202603/1357823.shtml</link>
+      <pubDate>Mon, 30 Mar 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>China schedules next moonshot this year: developer </title>
+      <link>https://www.globaltimes.cn/page/202603/1356805.shtml</link>
+      <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Nearly 4.9 million visits from Taiwan to mainland in 2025 with one-third made by young people: CPPCC member</title>
+      <link>https://www.globaltimes.cn/page/202603/1356809.shtml</link>
+      <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>NPC deputy calls to make comprehensive sex education a formal part of China's basic education curriculum</title>
+      <link>https://www.globaltimes.cn/page/202603/1356812.shtml</link>
+      <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Renowned scholar and political advisor expresses confidence in China's AI development, computing power</title>
+      <link>https://www.globaltimes.cn/page/202603/1356746.shtml</link>
+      <pubDate>Wed, 11 Mar 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>China's 2026 defense budget set at 1.94 trillion yuan: spokesperson</title>
+      <link>https://www.globaltimes.cn/page/202603/1356751.shtml</link>
+      <pubDate>Wed, 11 Mar 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>NPC deputy suggests optimizing vacations, breaks to stimulate domestic consumption</title>
+      <link>https://www.globaltimes.cn/page/202603/1356670.shtml</link>
+      <pubDate>Tue, 10 Mar 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>NPC deputy suggests better informing patients of fertility risks before treatment</title>
+      <link>https://www.globaltimes.cn/page/202603/1356672.shtml</link>
+      <pubDate>Tue, 10 Mar 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Chinese courts step up crackdown on cyber crimes</title>
+      <link>https://www.globaltimes.cn/page/202603/1356678.shtml</link>
+      <pubDate>Tue, 10 Mar 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>China's astronaut center addresses challenges of long-term human survival on exoplanets: political advisor and China's first female taikonaut to enter space station</title>
+      <link>https://www.globaltimes.cn/page/202603/1356598.shtml</link>
+      <pubDate>Mon, 09 Mar 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>From Pegasus to Blades of the Guardians, film IPs fuel Xinjiang's tourism boom, NPC deputy tells GT</title>
+      <link>https://www.globaltimes.cn/page/202603/1356599.shtml</link>
+      <pubDate>Mon, 09 Mar 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>CPC Central Committee, State Council congratulate Chinese Winter Olympics delegation</title>
+      <link>https://www.globaltimes.cn/page/202602/1355612.shtml</link>
+      <pubDate>Tue, 24 Feb 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Chinese, Iranian diplomats meet before US-Iran nuclear talk; move reflects Teheran's willingness to seek intl support: Chinese expert</title>
+      <link>https://www.globaltimes.cn/page/202602/1354898.shtml</link>
+      <pubDate>Fri, 06 Feb 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>China stresses Taiwan at 'core of core interests' after Xi-Trump call; Room for 'relying on US for independence' illusion will only shrink further: expert</title>
+      <link>https://www.globaltimes.cn/page/202602/1354899.shtml</link>
+      <pubDate>Fri, 06 Feb 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Uruguayan president visits Great Wall, Palace Museum on 2nd day of China trip; Chinese expert says growing interest in CPC history shows wish to learn from China</title>
+      <link>https://www.globaltimes.cn/page/202602/1354683.shtml</link>
+      <pubDate>Tue, 03 Feb 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Chinese FM holds strategic dialogue with Russia's Shoigu; Wang warns the world 'faces risk of regressing to law of jungle'</title>
+      <link>https://www.globaltimes.cn/page/202602/1354633.shtml</link>
+      <pubDate>Mon, 02 Feb 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Trump claims India will buy Venezuelan oil, welcomes China's investment; Chinese expert notices remarks 'unilateral,' no confirmation from Indian side</title>
+      <link>https://www.globaltimes.cn/page/202602/1354617.shtml</link>
+      <pubDate>Mon, 02 Feb 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Takaichi skipping of TV debate due to 'hand injury' sparks dissatisfaction from Japanese politicians, netizens, saying Takaichi avoids key questions including Unification Church scandal</title>
+      <link>https://www.globaltimes.cn/page/202602/1354620.shtml</link>
+      <pubDate>Mon, 02 Feb 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>No case of Nipah virus disease detected in China so far: China's disease control authorities</title>
+      <link>https://www.globaltimes.cn/page/202601/1354289.shtml</link>
+      <pubDate>Wed, 28 Jan 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>China's first Type 054B frigate reaches operational capability, official media reveals amid warship's first commissioning anniversary</title>
+      <link>https://www.globaltimes.cn/page/202601/1353945.shtml</link>
+      <pubDate>Fri, 23 Jan 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>PLA Navy's Type 055 large destroyer boosts anti-submarine capabilities with confrontational exercise in South China Sea</title>
+      <link>https://www.globaltimes.cn/page/202601/1353715.shtml</link>
+      <pubDate>Wed, 21 Jan 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>S. Korea's ex-president Yoon sentenced to 5 years in prison over obstruction of justice</title>
+      <link>https://www.globaltimes.cn/page/202601/1353435.shtml</link>
+      <pubDate>Sat, 17 Jan 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Shenzhou-20 taikonauts make 1st public appearance after safe return following debris incident, recounts details</title>
+      <link>https://www.globaltimes.cn/page/202601/1353427.shtml</link>
+      <pubDate>Fri, 16 Jan 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>ROK president arrives in Beijing with 200 business delegates, hails full restoration of bilateral ties 'the greatest achievement'</title>
+      <link>https://www.globaltimes.cn/page/202601/1352267.shtml</link>
+      <pubDate>Mon, 05 Jan 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>The Irish Taoiseach's visit to China in 14 years could be a 'touchstone' for China-EU relations: expert</title>
+      <link>https://www.globaltimes.cn/page/202601/1352223.shtml</link>
+      <pubDate>Mon, 05 Jan 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Witnesses of Struggle: GT visits Hump Route crash site in Xizang, retracing enduring memory of wartime sacrifice and friendship</title>
+      <link>https://www.globaltimes.cn/page/202512/1351918.shtml</link>
+      <pubDate>Tue, 30 Dec 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>China imposes countermeasures against 20 US companies, 10 senior executives in response to US arms sales to Taiwan</title>
+      <link>https://www.globaltimes.cn/page/202512/1351573.shtml</link>
+      <pubDate>Sat, 27 Dec 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Russia-China ties crucial for global stability: Putin at annual conference</title>
+      <link>https://www.globaltimes.cn/page/202512/1351040.shtml</link>
+      <pubDate>Sat, 20 Dec 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Chinese FM strongly condemns $11b US arms sales to Taiwan; DPP authorities 'thanking' Washington slammed by island netizens</title>
+      <link>https://www.globaltimes.cn/page/202512/1350901.shtml</link>
+      <pubDate>Fri, 19 Dec 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Chinese Embassy in UK urges London to recognize reality, adopt correct mindset following Starmer's China-related remarks</title>
+      <link>https://www.globaltimes.cn/page/202512/1349549.shtml</link>
+      <pubDate>Wed, 03 Dec 2025 13:13:40 GMT</pubDate>
+    </item>
+    <item>
+      <title>No 'slave's peace'</title>
+      <link>https://www.globaltimes.cn/page/202512/1349592.shtml</link>
+      <pubDate>Wed, 03 Dec 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>HK to set up judge-led independent commission to investigate deadly fire; Chief Executive vows accountability to be pursued to very end</title>
+      <link>https://www.globaltimes.cn/page/202512/1349610.shtml</link>
+      <pubDate>Wed, 03 Dec 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>China, Russia conduct strategic alignment on issues related to Japan</title>
+      <link>https://www.globaltimes.cn/page/202512/1349611.shtml</link>
+      <pubDate>Wed, 03 Dec 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>2025 Understanding China Conference opens in Guangzhou, spotlighting 15th Five-Year Plan and China's global initiatives</title>
+      <link>https://www.globaltimes.cn/page/202512/1349509.shtml</link>
+      <pubDate>Tue, 02 Dec 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Practitioner's Insights: Large-scale Chinese-built wind power projects in S.Africa turn stable, abundant electricity supply for locals from luxury into reality</title>
+      <link>https://www.globaltimes.cn/page/202511/1349428.shtml</link>
+      <pubDate>Mon, 01 Dec 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Civic groups in Taiwan protest Lai's arms push, oppose being dragged toward battlefield</title>
+      <link>https://www.globaltimes.cn/page/202511/1349319.shtml</link>
+      <pubDate>Sat, 29 Nov 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Never alone in times of crisis: HK and mainland stand in solidarity to aid rescue and relief in high-rise fire</title>
+      <link>https://www.globaltimes.cn/page/202511/1349330.shtml</link>
+      <pubDate>Sat, 29 Nov 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Kuliang bond forges 'hometown affection' across the Pacific</title>
+      <link>https://www.globaltimes.cn/page/202511/1349123.shtml</link>
+      <pubDate>Thu, 27 Nov 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Chinese premier arrives in Johannesburg for 1st G20 summit in Africa</title>
+      <link>https://www.globaltimes.cn/page/202511/1348778.shtml</link>
+      <pubDate>Sat, 22 Nov 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Chinese scientists document first evidence of tool use in giant pandas</title>
+      <link>https://www.globaltimes.cn/page/202511/1348694.shtml</link>
+      <pubDate>Fri, 21 Nov 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>GT investigates: From political opportunist to militarist advocate: An expose of Japanese Prime Minister Sanae Takaichi's radical path</title>
+      <link>https://www.globaltimes.cn/page/202511/1348619.shtml</link>
+      <pubDate>Thu, 20 Nov 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>GT investigates: How Japan's PM revives bellicism mindset, perpetuates 'victim narrative' pushed by right-wing forces since WWI</title>
+      <link>https://www.globaltimes.cn/page/202511/1348504.shtml</link>
+      <pubDate>Wed, 19 Nov 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Multiple regions roll out autumn breaks for primary, secondary schools, stimulating local tourism</title>
+      <link>https://www.globaltimes.cn/page/202511/1348517.shtml</link>
+      <pubDate>Wed, 19 Nov 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>GT on the spot: UN officials praise bird conservation efforts at Poyang Lake in Jiangxi</title>
+      <link>https://www.globaltimes.cn/page/202511/1348417.shtml</link>
+      <pubDate>Tue, 18 Nov 2025 00:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>
