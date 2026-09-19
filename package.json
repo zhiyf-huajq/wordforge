@@ -31,6 +31,14 @@
     "verify:read": "node _dev/verify-read.js",
     "verify:shots": "node _dev/shot.js",
     "verify:mobile": "node _dev/check-mobile-view.js",
-    "verify:live": "node _dev/verify-cn-live.js"
+    "verify:live": "node _dev/verify-cn-live.js",
+
+    "_release_说明": [
+      "打 tag + 建 GitHub Release + 把产物挂成附件。用法：npm run release -- 1.2",
+      "加 --dry-run 只看计划不动远端：npm run release -- 1.2 --dry-run",
+      "发版前要同步改两处版本号：本文件的 version、CHANGELOG.md 里新起一段 ## [1.2]",
+      "Release 正文是从 CHANGELOG.md 自动摘的，所以 CHANGELOG 才是单一事实来源"
+    ],
+    "release": "python _dev/release.py"
   }
 }
