@@ -664,19 +664,67 @@ label.fld .desc{font-size:11.5px;color:var(--text-faint);margin-top:5px;line-hei
 .rlab{font-size:12px;color:var(--text-faint);margin-right:2px}
 .ras{border:1px solid var(--border);background:var(--panel-2);color:var(--text-dim);padding:5px 11px;border-radius:999px;font-size:12.5px;cursor:pointer;font-family:inherit;transition:all var(--dur)}
 .ras.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
-/* 正文排版：行距放宽、段落编号靠左，接近纸质书的阅读密度 */
-.rpara{position:relative;padding-left:32px;margin-bottom:17px}
-.rpnum{position:absolute;left:0;top:5px;width:22px;text-align:right;font-size:10.5px;color:var(--text-faint);font-family:var(--mono)}
-.rtext{font-family:var(--word-font);font-size:17px;line-height:1.95;margin:0;color:var(--text)}
-.rsent{font-family:var(--word-font);font-size:17px;line-height:1.85;margin:0 0 9px;color:var(--text)}
+/* ---------- 正文排版（精读台的核心，改这里等于改整个产品的阅读手感）----------
+   三段式：① 测量宽度 ② 段落与缩进 ③ 逐词标记。
+   这一版把四处具体问题一次改掉，每处都写了「原来怎样、为什么不行」：
+
+   ①【行宽无上限】原来是满宽。桌面上 1200px 宽屏一行能塞 130 多个字符，
+     读第二行时眼睛找不到第一行的起点（排版上叫 measure 过长）。
+     正文用 ch 单位限宽 —— ch 是「数字 0 的宽度」，和字号绑定，
+     所以用户调大字号时行宽会跟着变宽，字符数（也就是阅读节奏）保持不变。
+     62ch 是实测舒服的区间（中文排版的 30–40 字/行换到英文大致是这个量级）。
+   ②【首行不缩进】原来段落之间只靠 margin 分隔。英文长文里，段首缩进是
+     读者判断「新段落开始了」的第一线索，尤其在行距大的时候比空白更有效。
+     两样一起用（缩进 + 间距），扫读时定位快很多。缩进用 em 而不是 px：
+     跟着字号走，用户调大字号时缩进不会变得微不足道。
+   ③【行高过松】1.95 在高字号下会让段落「散架」，读起来上下不连。
+     收到 1.78 并把段间距加大到 1.05em —— 行内紧、段间松，这是长文的标准配比
+     （行内靠行高连成一条线，段间靠间距断开）。正文页统一用一套值。
+   ④【段号在窄屏白占 32px】原来固定 padding-left:32px，360px 手机上正文
+     少掉近 9% 宽度。改成 >=720px 才让段号占位、窄屏把段号并进段首。
+   ⑤【每行都能点，但点不到】.rw 只有 1px 内边距，触屏上目标太小。
+     手机上加了纵向补偿（不影响排版），桌面维持原样。 */
+.rbody{max-width:62ch}
+.rpara{position:relative;padding-left:0;margin-bottom:1.05em;text-indent:1.6em}
+.rpara:last-child{margin-bottom:0}
+.rpnum{display:none}
+.rtext{font-family:var(--word-font);font-size:17px;line-height:1.78;margin:0;color:var(--text);text-indent:1.6em;hyphens:auto;-webkit-hyphens:auto}
+.rsent{font-family:var(--word-font);font-size:17px;line-height:1.8;margin:0 0 .62em;color:var(--text);text-indent:0}
+.rsent:last-child{margin-bottom:0}
+/* 逐句档：句子左对齐、段号在窄屏也占位（一句一行的排版本来就需要明确的行首锚点） */
+.rpara.rsent-mode{text-indent:0}
+.rpara.rsent-mode .rpnum{display:block}
+@media(min-width:720px){
+  /* 宽屏才给段号留位置。这时空间够，段号能帮读者记住「读到第几段了」 */
+  .rpara{padding-left:34px;text-indent:0}
+  .rpnum{display:block;position:absolute;left:0;top:6px;width:22px;text-align:right;
+    font-size:10.5px;color:var(--text-faint);font-family:var(--mono);letter-spacing:.02em}
+  /* 宽屏有段号时取消首行缩进 —— 段号本身就是「新段落」的标记，
+     再叠一个缩进会变成双重提示，反而显得空 */
+  .rtext{text-indent:0}
+}
 .rw{cursor:pointer;border-radius:3px;padding:0 1px;transition:background var(--dur)}
 .rw:hover{background:var(--accent-soft)}
+@media(hover:none){
+  /* 触屏没有 hover，用手指点词是最主要的交互。纵向补偿 0.16em 让可点区域
+     接近 44px 的推荐下限，同时横向不动（横向加宽会改变字间距，看着像排版坏了）。 */
+  .rw{padding:0.16em 1px}
+}
 .rw-new{border-bottom:1.5px dashed var(--accent)}
 /* 行内释义：原来写死在 white-space:nowrap，长释义（尤其带「（X 的变形）」尾巴的）
    在窄屏上会直接撑破正文容器 —— 手机上就是一段文字被裁掉。
    改成允许换行 + anywhere 断词，短释义依然不会被拆（只有实在放不下才断）；
    box-decoration-break:clone 保证折成两行时每行的圆角底色都是完整的。 */
 .rcn{font-style:normal;font-size:12px;color:var(--accent-2);background:var(--accent-soft);border-radius:3px;padding:0 4px;margin:0 2px 0 1px;white-space:normal;overflow-wrap:anywhere;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+/* 首页「今日精读」卡 + 取文骨架屏。
+   骨架屏是给「正在取今天的文章…」用的 —— 那一段可能持续好几秒（经中转更慢），
+   不给任何视觉占位的话，用户看到的是一句静止的说明，会以为没反应。 */
+.rhome .rtitle{font-family:var(--word-font)}
+.rskel{display:flex;flex-direction:column;gap:7px;margin:10px 0 2px}
+.rskel i{height:11px;border-radius:5px;background:var(--panel-3);display:block;
+  animation:rskel 1.25s ease-in-out infinite}
+.rskel i:last-child{animation-delay:.18s}
+@keyframes rskel{0%,100%{opacity:.45}50%{opacity:.9}}
 /* 点词弹窗 */
 .wpop-ph{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--text-dim);font-family:var(--mono);margin-bottom:8px}
 .wpop-ph .pp b{color:var(--text-faint);font-weight:500;margin-right:2px;font-family:var(--sans)}
@@ -990,6 +1038,26 @@ var CFG_DEF = {
      不满足时 pickMode 会自动顺延到下一个能用的题型，
      所以「全开」不等于「让用户对着做不了的题」。 */
   activeModes: ["recog", "recall", "listen", "cloze", "spell", "card"],
+  /* ---- 背词模式（统一入口）----
+     用户的反馈原话：「现在这种背词模式实在太混乱了」。
+     混乱的根源不是选项太少，是【方向】这个维度从来没有被表达出来 ——
+     六个题型名（看词选义 / 看义选词 / 听音辨词 / 例句填空 / 拼写 / 卡片速记）
+     其实混着两件不同的事：**先看到哪一面**（词 or 释义）和**要你做什么**（选 / 听 / 拼）。
+     拆开之后，用户只需要回答两个问题就够定位自己的偏好，不用在六个名词之间猜。
+
+     dir   先给哪一面：  w2m 看词想义 / m2w 看义想词 / mix 交替
+            → 它决定「同一张卡先露哪一面」，是学习感受里最直接的一层
+     ask   要你做什么：  recall 只想（自评） / choice 选一个 / spell 写出来 / listen 听出来
+            → 它决定交互的强度。想得起来但写不出来，正是「眼熟≠会」的分界
+     card  纯卡片速记仍然保留为兜底（没有任何前置条件，永远能用）
+
+     ⚠ 这两层必须【派生】出 activeModes，而不是各管各的。
+       否则就会出现「设置里写着看义想词、实际出的题还是看词选义」这类静默不一致 ——
+       而这正是原来那个界面的毛病：题型开关是唯一入口，用户改完看不出自己改了什么方向。
+     scanMode() 是唯一的派生函数，pickMode 只管按它挑，两处共用同一份判断。 */
+  vmode: "mix",                    /* w2m | m2w | mix —— 先给哪一面 */
+  vask: "auto",                    /* auto | recall | choice | spell | listen —— 要你做什么 */
+  vflipFirst: true,                /* 「只看/自评」档下，是否先藏答案再揭晓（正反面翻转） */
   initSteps: [1, 8, 30, 120],        /* 首次评价 → 分钟 */
   secondSteps: [15, 480, 1440, 4320],
   easeStart: 2.5, easeMin: 1.3, easeMax: 3.0,
@@ -2095,6 +2163,69 @@ function examPlan() {
     name: (bookMeta(bid) || { name: "" }).name || "当前词书"
   };
 }
+/* 首页的「今日精读」卡。四种状态各有各的文案，每种都给出下一步：
+     ok    取到了 → 标题 + 来源 + 生词量 + 开始精读
+     run   正在取 → 骨架 + 「正在取今天的文章…」（不显示上一篇，免得张冠李戴）
+     off   联网关着 / 离线 → 说明 + 「离线精读已存的文章」的退路
+     no    取失败 → 原因 + 「重试」+ 一句「不影响其它功能」
+   为什么要把失败原因摆在首页而不是 toast 一下了事：
+   自动取文是没人等它的后台行为，静默失败会让用户以为这功能根本不存在。 */
+function readHomeCardHTML() {
+  var c = cfg();
+  var st = AUTOA.st || "";
+  var a = st === "run" ? null : autoArtToday();
+  var h = '<div class="card rhome">' +
+    '<div class="card-h"><h2>今日精读</h2><span class="hint">打开应用自动取一篇真实文章</span></div>';
+
+  if (st === "run") {
+    h += '<p class="rmuted" style="font-size:12.5px;margin:2px 0 0">正在取今天的文章…</p>' +
+      '<div class="rskel"><i></i><i style="width:72%"></i></div>';
+    return h + "</div>";
+  }
+  if (a) {
+    var pf = artStat(a);
+    h += '<b class="rtitle" style="font-size:16px;display:block;margin:6px 0 4px">' + esc(a.t) + "</b>" +
+      '<div class="rmeta">' + esc(a.src) + " · " + esc(a.d) + (a.via ? " · 经中转" : "") +
+      (a.auto ? ' · <b class="rec">今日自动取文</b>' : "") + "</div>" +
+      '<div class="rprof small" style="margin:8px 0 0">' +
+      '<div class="rpcol"><b>' + pf.n + "</b><span>总词数</span></div>" +
+      '<div class="rpcol hot"><b>' + pf.nw + "</b><span>生词</span></div>" +
+      '<div class="rpcol"><b class="stars">' + starStr(pf.star) + "</b><span>难度</span></div>" +
+      "</div>" +
+      '<div class="rrow">' +
+      '<button class="btn primary sm" data-jump="art:' + esc(a.id) + '">开始精读 ›</button>' +
+      '<button class="btn ghost sm" data-jump="artq:' + esc(a.id) + '">直接做练习</button>' +
+      '<span class="sp"></span>' +
+      '<button class="btn ghost sm" id="rhMore">看更多文章</button>' +
+      "</div>";
+    return h + "</div>";
+  }
+  /* 没有可展示的文章：按原因给不同的出路 */
+  var why = AUTOA.msg || "";
+  if (c.netOff) {
+    h += '<p class="rmuted" style="font-size:12.5px;margin:2px 0 0">' +
+      "联网开关是关着的，所以没有自动取文（这是应用里唯一联网的模块，关掉就完全不发请求）。</p>" +
+      '<div class="rrow"><button class="btn sm" data-go="read">去打开联网开关 ›</button>' +
+      '<button class="btn ghost sm" data-go="read">粘贴导入一篇 ›</button></div>';
+    return h + "</div>";
+  }
+  if (NETST.on === false) {
+    h += '<p class="rmuted" style="font-size:12.5px;margin:2px 0 0">' +
+      "当前设备处于离线状态，取不了新文章。本地已存的文章不受影响。</p>" +
+      '<div class="rrow"><button class="btn ghost sm" data-go="read">离线精读已存的文章 ›</button></div>';
+    return h + "</div>";
+  }
+  h += '<p class="rmuted" style="font-size:12.5px;margin:2px 0 0">' +
+    esc(why || "今天还没有取到文章。") + "</p>";
+  if (why) {
+    h += '<p class="tiny faint" style="margin:4px 0 0">' +
+      esc("这不影响背单词 / 复习 / 词库 / 统计 —— 那几个功能全程不联网。") + "</p>";
+  }
+  h += '<div class="rrow"><button class="btn sm" id="rhRetry">重试一次</button>' +
+    '<button class="btn ghost sm" data-go="read">去精读页看看 ›</button>' +
+    '<button class="btn ghost sm" data-go="read">粘贴导入 ›</button></div>';
+  return h + "</div>";
+}
 function vToday() {
   var g = globalStats();
   var c = cfg();
@@ -2155,10 +2286,16 @@ function vToday() {
     '<button class="btn lg" id="startQuiz"><svg><use href="#i-target"/></svg>来个小测</button>' +
     "</div></div>";
 
+  /* 今日精读：把「今天该读的那篇文章」直接摆到首页。
+     需求是「打开就自动拉一篇，放在主页面上」—— 所以这张卡不是入口按钮，
+     而是内容本身：标题、来源、生词量、一个「开始精读」。
+     位置在复习预测之前：读文章是「今天做什么」的一部分，比看预测更靠前。
+     文案全部按 AUTOA.st 推导，不写死 —— 界面不能声称取到了实际没取到的东西。 */
+  h += readHomeCardHTML();
+
   /* 未来 7 天到期预测 */
   h += '<div class="card"><div class="card-h"><h2>未来 7 天复习量预测</h2><span class="hint">提前安排时间</span></div>' +
     forecastBars() + "</div>";
-
   /* 近 14 天 */
   h += '<div class="card"><div class="card-h"><h2>近 14 天学习量</h2><span class="hint">每日测评次数</span></div>' +
     barsHTML(14) + "</div>";
@@ -2402,6 +2539,85 @@ function sessionModes() {
   return a && a.length ? a.slice() : ["card"];
 }
 
+/* ---------- 8c-2. 背词模式：把 (方向 × 动作) 派生成题型序列 ----------
+ * 这是「统一设置背词偏好」那条需求的实现核心。全部是纯函数，不碰 DOM、不碰状态，
+ * 所以可以直接喂参数断言 —— 见 test-logic 的 [24]。
+ *
+ * 为什么不用一个「模式」字符串直接映射到题型列表：
+ *   因为方向是【依赖轮换】的，不是每张都一样。用户选「交替」时，
+ *   奇数张先给词、偶数张先给义 —— 这只能靠一个按序号计算的函数表达，
+ *   写死成一个列表就没法表达「交替」这件事了。
+ *   所以：modeAt(mode, dir, i) 逐张算方向，其余全是从它派生。
+ */
+
+/* 第 i 张卡先给哪一面。mix 时按序号奇偶交替 ——
+   用序号而不是随机：随机会出现连着五张同方向，感受上等于没有交替。 */
+function dirAt(i) {
+  var m = cfg().vmode || "mix";
+  if (m === "w2m") return "w2m";
+  if (m === "m2w") return "m2w";
+  return (i % 2 === 0) ? "w2m" : "m2w";
+}
+/* 「要你做什么」里，哪些动作需要「先看到词面」。
+   listen 和 spell 都是「听/写英文」，所以必须先给词（或至少不给释义当选项）；
+   choice 交给方向决定；recall 是纯自评，方向决定题干。 */
+var ASK_NAME = {
+  auto: "按方向自动", recall: "只想一想（自评）", choice: "选一个",
+  spell: "写出来", listen: "听出来"
+};
+var DIR_NAME = { w2m: "看单词想释义", m2w: "看释义想单词", mix: "两种轮流" };
+/* 从 (方向, 动作, 序号) 推出这一张该用哪个题型。
+   返回 null 表示「这个组合没有对应的题型」—— 调用方接着走 activeModes 轮换，
+   而不是硬塞一个不合适的题型进来。 */
+function modeFromPair(dir, ask, canSpell, canListen, canCloze) {
+  if (ask === "listen") return canListen ? "listen" : null;
+  if (ask === "spell") return (canSpell && dir !== "m2w") ? "spell" : null;
+  /* 「只看一听」：方向决定题干，揭晓时露出另一面 —— 由 vflipFirst 控制是否先藏 */
+  if (ask === "recall") return dir === "m2w" ? "recallCard" : "card";
+  if (ask === "choice") {
+    /* 选择题在两种方向下是不同的题型：看词选义 / 看义选词。
+       这就是「方向」这个维度原来被埋掉的地方 —— 它一直存在，只是没被说出来。 */
+    if (dir === "m2w") return "recall";
+    return "recog";
+  }
+  return null;
+}
+/* 主入口：第 i 张卡实际该用哪个题型。
+   优先级：① 用户显式配的 (方向, 动作) ② activeModes 轮换 ③ 卡片速记兜底。
+   ①② 都算不出来时才落到 ③ —— 「用户选了什么就一定按什么来」这条不能破。 */
+function pickModeIdx(i) {
+  /* 先把「这个设备 / 这个词支不支持」问清楚，避免推导出一个做不了的题 */
+  var r = rec((S && S.i < S.queue.length) ? S.queue[S.i] : null);
+  var canSpell = modeOK("spell", r), canListen = modeOK("listen", r), canCloze = modeOK("cloze", r);
+  var ask = cfg().vask || "auto";
+  if (ask !== "auto") {
+    var m = modeFromPair(dirAt(i), ask, canSpell, canListen, canCloze);
+    /* 推导出来的题型本身还有前置条件（比如 spell 要求有中文释义）——
+       交给 modeOK 再挡一道，挡下来就顺延，不让用户对着做不了的题 */
+    if (m && modeOK(m, r)) return m;
+  }
+  var modes = (S && S.modes && S.modes.length) ? S.modes : ["card"];
+  var n = modes.length, base = i % n;
+  for (var k = 0; k < n; k++) {
+    var mm = modes[(base + k) % n];
+    if (modeOK(mm, r)) return mm;
+  }
+  return "card";
+}
+/* 界面上的说明：把当前设置翻译成一句人话，让用户确认「我选的就是我想要的」。
+   这一段存在的理由就是那句反馈 —— 原来改完题型开关，界面上没有任何地方
+   能用一句话说清「现在到底是什么模式」。 */
+function vmodeDesc() {
+  var d = cfg().vmode || "mix", a = cfg().vask || "auto";
+  var m = DIR_NAME[d] || DIR_NAME.mix;
+  if (a === "auto") return m + "，按你勾选的题型轮换";
+  if (a === "recall") return m + "，只想一想然后自评" + (cfg().vflipFirst ? "（答案先盖住）" : "（答案直接给）");
+  if (a === "spell") return d === "m2w" ? "写出来 —— 但「看释义想单词」不能拼写（会变成听写），已退回自评" : m + "，写出单词";
+  if (a === "listen") return "听发音，判断是哪个词";
+  if (a === "choice") return d === "m2w" ? "看释义，从选项里选出单词" : d === "w2m" ? "看单词，从选项里选出释义" : "看单词选释义 / 看释义选单词，两种轮流";
+  return m;
+}
+
 /* ---------- 8d. 形近词组（易混词）数据 ----------
    CONF 是构建期算好的分组：每组 2–4 个「拼写相近、意思不同」的词。
    存成「组」而不是逐词的伙伴列表，是因为组内成员本来就互相共享 ——
@@ -2497,14 +2713,7 @@ function curMode() { return S.modes[S.i % S.modes.length]; }
    注意返回的必须是**实际渲染**的那个题型，因为卡头的题型标签读的就是它；
    否则会出现「标签写着听音辨词、画面却是一张卡片」的错位。 */
 function pickMode() {
-  var r = curWord();
-  var n = S.modes.length;
-  var base = S.i % n;
-  for (var k = 0; k < n; k++) {
-    var m = S.modes[(base + k) % n];
-    if (modeOK(m, r)) return m;
-  }
-  return "card";
+  return pickModeIdx(S ? S.i : 0);
 }
 
 function renderSession() {
@@ -2546,7 +2755,10 @@ function renderSession() {
   }
 }
 function modeTag(m) {
-  var names = { recog: "看词选义", recall: "看义选词", spell: "拼写", listen: "听音辨词", card: "卡片速记", cloze: "例句填空" };
+  var names = {
+    recog: "看词选义", recall: "看义选词", spell: "拼写", listen: "听音辨词",
+    card: "卡片速记", cloze: "例句填空", recallCard: "看义想词"
+  };
   return '<span class="tag accent">' + esc(names[m] || m) + "</span>";
 }
 function statusTag(r) {
@@ -2560,6 +2772,7 @@ function statusTag(r) {
 function cardBody(r, mode) {
   if (mode === "recog") return recogBody(r);
   if (mode === "recall") return recallBody(r);
+  if (mode === "recallCard") return recallCardBody(r);
   if (mode === "spell") return spellBody(r);
   if (mode === "listen") return listenBody(r);
   if (mode === "cloze") return clozeBody(r);
@@ -2619,6 +2832,43 @@ function clozeBody(r) {
     '<div class="spell-box"><input class="spell-input" id="spellIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="填入缺失的单词">' +
     '<div class="row" style="gap:8px;margin-top:12px"><button class="btn" id="say"><svg><use href="#i-vol"/></svg>听发音</button>' +
     '<button class="btn primary sp" id="spellOk">确认</button></div></div>';
+}
+/* 反方向的自评卡：**题干是释义，答案是单词**。
+   这就是用户说的「给定释义回想单词」被点名要的那种 —— 原来的六个题型里
+   只有「看义选词」是反方向的，而它给的是选择题（四个选项里认一个），
+   比「回想」轻得多：选项会把答案喂到嘴边，蒙对也算对。
+   真正要「回想」就必须不设选项，让自己先在心里过一遍，再揭晓。
+
+   两个开关各自管一件事，不互相顶：
+     · vflipFirst —— 「答案先盖住」还是「直接给」。盖住 = 强制先回想（有摩擦，记得牢）；
+                    直接给 = 省事（等于确认自己会不会）。这是**用户的偏好**，不该由代码猜。
+     · blurDef（沿用旧设置）—— 卡片速记那一档的老开关，语义相同，继续生效。
+   两者取「或」：任一要求盖住就盖住。这样老用户没动 vflipFirst 也不会感觉行为变了。 */
+function recallCardBody(r) {
+  /* S 可能为 null（比如渲染发生在会话之外，或被测试脚本直接调用）——
+     这里不假设它一定存在。原来 cardBodyFlip 直接读 S.revealed，
+     在那种场景下会抛 TypeError 把整张卡打空，属于「不该有的脆弱」。 */
+  var revealed = !!(S && S.revealed);
+  var blur = (cfg().vflipFirst || cfg().blurDef) && !revealed;
+  var h = '<div class="w-block"><div class="bt">根据释义回想单词</div>' + defHTML(r) +
+    (cfg().showEn && r[F.EN] ? '<div class="w-en">' + esc(r[F.EN]) + "</div>" : "") + "</div>";
+  /* 词头放在释义之后 —— 这正是「方向」在视觉上的体现。
+     它不能塞进 .w-word（那个类是大字号标题位，会让人以为这就是题干）。 */
+  h += '<div class="w-sep"></div>' +
+    '<div class="' + (blur ? "blurred" : "") + '" id="revBox">' +
+    '<div class="w-word">' + esc(r[F.W]) + "</div>" + ipaHTML(r) +
+    exHTML(r) + phraseHTML(r) + formsHTML(r) + rtHTML(r) + metaHTML(r) + mnemoHTML(r) +
+    '<div class="row wrap" style="gap:6px;margin-top:14px" id="mkBar">' + markBtns(r[F.W]) + "</div>" +
+    "</div>";
+  if (blur) h += '<div class="reveal">在心里过一遍，再点「看单词」或按空格揭晓</div>' +
+    '<div class="row" style="gap:8px"><button class="btn primary sp" id="reveal">看单词（空格）</button></div>';
+  /* 注意这里**不挂朗读按钮**：题干只有释义，先朗读就等于把答案读出来了。
+     揭晓之后（S.revealed）答案区里才出现发音入口 —— 见下面这段。 */
+  if (!blur && revealed) {
+    h += '<div class="row" style="gap:8px;margin-top:12px">' +
+      '<button class="btn sm" id="say"><svg><use href="#i-vol"/></svg>朗读</button></div>';
+  }
+  return h;
 }
 function cardBodyFlip(r) {
   var blur = cfg().blurDef && !S.revealed;
@@ -3056,6 +3306,19 @@ function bindCommon() {
     };
   });
   var sb = $("switchBook"); if (sb) sb.onclick = showBookPicker;
+  /* 首页「今日精读」卡上的三个入口。
+     重试按钮只在没取到时出现，所以点了必然能重新走一遍完整流程（含跨天缓存检查）。 */
+  var rhm = $("rhMore"); if (rhm) rhm.onclick = function () { go("read"); };
+  var rhr = $("rhRetry");
+  if (rhr) rhr.onclick = function () {
+    rhr.disabled = true;
+    AUTOA.busy = false;                    /* 清掉可能残留的锁：失败路径上它理论上已经复位，这里防一手 */
+    autoFetchArt(function (art, msg) {
+      render();
+      toast(art ? ("已取到《" + art.t + "》") : ("没取到：" + (msg || "原因未知")), art ? "ok" : "info");
+    });
+    render();
+  };
   var ss = $("startStudy"); if (ss) ss.onclick = function () { startSession("auto"); };
   var sr = $("startReview"); if (sr) sr.onclick = function () { startSession("review"); };
   var sq = $("startQuiz"); if (sq) sq.onclick = function () { go("quiz"); };
@@ -3256,9 +3519,11 @@ function showBookPicker() {
    注意：能连上 ≠ 一定能取到。中国大陆的网络环境下，境外站点往往整体不可达，
    所以「源可达性」必须让用户自己实测 —— 见 netSelfTest()。
 
-   实测记录（2026-09，大陆网络）：
-     ✓ 中国日报栏目页 / 环球时报 RSS 与文章页 —— 可达且放行跨域（新增的主力源）
-     ✗ 维基家族 / 卫报 —— 直接超时，原来那批源基本用不了
+   实测记录（2026-09-19，43 次请求，带正负对照）：
+     ✓ 中国日报栏目页 / 环球时报 RSS 与文章页 —— 可达且放行跨域（主力源）
+     ✗ 维基家族 / 卫报 —— 本机直连超时。但【不删代码】：中转是云端服务，
+       用户的浏览器经中转可能读得到；而且换个网络就恢复了，删了等于永久掐死。
+       应用改成按自测结果隐藏（见 hostDown），而不是从白名单里拿掉。
      ✗ 中国日报【文章页】—— 页面可达，但响应里没有跨域头，浏览器读不到 → 走中转 */
 var NET_WL = [
   "en.wikipedia.org", "simple.wikipedia.org", "zh.wikipedia.org",
@@ -3266,11 +3531,120 @@ var NET_WL = [
   "content.guardianapis.com",
   /* --- 中国英文媒体（大陆网络可达） --- */
   "www.chinadaily.com.cn", "www.globaltimes.cn",
-  /* --- 跨域中转：源站不给跨域头时由它们代取（详见 netGetSmart） --- */
-  "cors.eu.org", "api.allorigins.win"
+  /* --- 跨域中转：源站不给跨域头时由它们代取（详见 netGetSmart / NETBR） --- */
+  "cors.eu.org", "api.allorigins.win", "whateverorigin.org"
 ];
 
 var NETST = { on: (typeof navigator !== "undefined" && typeof navigator.onLine === "boolean") ? navigator.onLine : null, testing: false, results: {} };
+
+/* ---------- 12a. 取自测结果的可达性门控 ----------
+ * 需求原文：「监测所有来源在 PC / 移动端环境下是否可达，若不可达请删除来源」。
+ *
+ * 为什么最后【不删代码】，而只做「隐藏 + 保留」：
+ *   可达性不是来源的属性，是【当前网络路径】的属性。同一个源，
+ *   家里宽带到不了、换运营商能到、连公司 VPN 又能到 —— 删掉代码等于把
+ *   一条本来会恢复的路永久掐死。而且我这边的命令行实测本来就不能代表用户的浏览器：
+ *   中转服务是在云端跑的，我这台沙箱到不了维基，用户的浏览器却可能经中转取到。
+ *   拿一份不具代表性的一次性测量去删功能，是在用错误的证据做不可逆的决定。
+ *
+ * 所以把判断权交给【应用自己】：跑一次自测（浏览器真实结果），
+ * 连续失败就标记为「当前网络不可达」并在界面上收起来；网络变了自测通过，它自己就回来了。
+ *
+ * 三条判定纪律（少一条都会误伤）：
+ *   ① 只有「连请求都没发成功」才算不可达。BLOCKED（不在白名单）/ OFF（用户关了联网）/
+ *      NOFETCH（浏览器不支持）是【策略性拒绝】，不是网络问题 —— 拿它们当不可达的证据，
+ *      会出现「用户关了一下联网开关，回来发现源全没了」这种荒谬结果。
+ *   ② 单次失败不算数。网络抖动、对方瞬时限流都很常见，实测 allorigins 五连测里
+ *      两成功两超时一 522。要 STRIKES 次都失败才认。
+ *   ③ 中转服务自己【永远不隐藏】。它跟别的源不是一类东西 —— 中国日报文章页的正文
+ *      必须经它取回（源站不给跨域头），把它藏起来等于把中国日报一起废掉。
+ *      它是「管道」不是「水龙头」，管道堵了要报出来，但不能假装没有管道。
+ */
+var STRIKES = 2;                /* 连续失败几次才认定不可达 */
+var UNAVAIL_TTL = 6 * 3600e3;   /* 认定结果的有效期：6 小时后过期重测，避免一直背着一个旧结论 */
+
+/* 一个自我维持的失败计数器（随主库持久化，见 DB.cfg.__netFail）。
+   放在 cfg 里的原因：load() 会自动补齐 CFG_DEF 的键，深合并结构不用另写迁移代码。
+   以「__」开头是为了跟真正的设置项区分开 —— 它不是用户可调的东西。 */
+function netFailMap() {
+  var c = cfg();
+  if (!c.__netFail || typeof c.__netFail !== "object") c.__netFail = {};
+  return c.__netFail;
+}
+function netUnavailMap() {
+  var c = cfg();
+  if (!c.__netUnavail || typeof c.__netUnavail !== "object") c.__netUnavail = {};
+  return c.__netUnavail;
+}
+/* 记录一次真实取文的结果（由 csLoad / csGrab 这类动作回调进来）。
+   ok=false 且「是网络层面的失败」→ 计数 +1；成功 → 计数清零、并解除不可达标记。
+   这样用户不需要手动点自测，正常使用的过程本身就在持续验证。 */
+function netNote(host, err) {
+  if (!host) return;
+  var f = netFailMap(), u = netUnavailMap();
+  if (!err) {
+    if (f[host]) { delete f[host]; }
+    if (u[host]) { delete u[host]; }
+    return;
+  }
+  /* 策略性拒绝不参与判定 —— 见上面纪律 ① */
+  if (err.code === "BLOCKED" || err.code === "OFF" || err.code === "NOFETCH" || err.code === "EMPTY" || err.code === "NOSRC" || err.code === "BADJSON") return;
+  f[host] = (f[host] || 0) + 1;
+  if (f[host] >= STRIKES) u[host] = now();
+}
+/* 自测结果也折算进来。自测是「用户明确点了一次」的高质量证据，
+   但它一次只跑一轮，所以按「一次自测 = 一次 strike」记，和其它路径同样对待。 */
+function netNoteSelfTest(results) {
+  var f = netFailMap(), u = netUnavailMap();
+  for (var h in results) {
+    if (!Object.prototype.hasOwnProperty.call(results, h)) continue;
+    var x = results[h];
+    /* 「不在白名单内」「浏览器不支持 fetch」不是网络结论，跳过 */
+    if (x && x.msg && /不在白名单|不支持 fetch|联网已关闭/.test(x.msg)) continue;
+    if (x && x.ok) { delete f[h]; delete u[h]; continue; }
+    f[h] = (f[h] || 0) + 1;
+    if (f[h] >= STRIKES) u[h] = now();
+  }
+}
+/* 某台主机现在是不是「认定不可达」。过期自动放行（TTL），
+   所以用户换到能通的网络后不需要手动清缓存 —— 最多等 6 小时，或者点一下自测立刻重判。 */
+function brHostOf(b) {
+  /* 从 pre 里抠出主机名（NETBR 没有单独的 host 字段）。 */
+  return String((b && (b.pre || b.url)) || "").replace(/^https:\/\//, "").split("/")[0];
+}
+/* 中转主机集合**从 NETBR 现算**，不写死。
+   写死的代价这一轮就撞上了：新增 whateverorigin 之后，它虽然是中转，
+   却因为不在那份硬编码清单里而被正常判定 —— 一旦连续失败两次就会被收起来，
+   表现为「中国日报正文突然全部取不到，界面上也没有任何解释」。
+   从数据现算，将来再加中转就不需要记得回来改这里。 */
+function isBridgeHost(host) {
+  for (var i = 0; i < NETBR.length; i++) if (brHostOf(NETBR[i]) === host) return true;
+  return false;
+}
+function hostDown(host) {
+  if (!host) return false;
+  if (isBridgeHost(host)) return false;   /* 纪律 ③：中转永不隐藏 */
+  var u = netUnavailMap();
+  var t = u[host];
+  if (!t) return false;
+  if (now() - t > UNAVAIL_TTL) { delete u[host]; return false; }
+  return true;
+}
+/* 某一个源（SRCS / CSRC 通用）现在可不可用。它的 host 不可达就算不可达。
+   ⚠ 这里按 host 而不是按 id 判定，是因为 CSRC 里五个中国日报栏目共用同一个 host
+     （www.chinadaily.com.cn）—— 按 id 判定会得出「中国栏目挂了、国际栏目正常」
+     这种不成立的结论，明明是同一台服务器。 */
+function srcDown(s) { return !!(s && s.host && hostDown(s.host)); }
+/* 当前还有没有可用的源。全不可用时界面要给一条明确的出路（粘贴导入），
+   而不是显示一个空架子让用户猜。 */
+function srcAnyUp(list) {
+  /* 空值也当「没有可用源」处理，而不是抛异常 ——
+     这个函数会被视图直接喂进 SRCS / CSRC，也可能被喂进一个还没拉到的清单（null）。
+     让它抛的话，界面会在渲染时整片白掉，而这本来只是一句「没有可用源」。 */
+  if (!list || !list.length) return false;
+  for (var i = 0; i < list.length; i++) if (!srcDown(list[i])) return true;
+  return false;
+}
 
 function netHostOK(u) {
   var m = /^https:\/\/([^\/?#]+)/i.exec(String(u || ""));
@@ -3357,11 +3731,17 @@ function netGetJSON(url, cb) {
    ⚠ 中转请求与直连请求走的是同一个 netGet：同样只 GET、不带凭据、不发来源页、无上传通道。
      也就是说「你的学习数据不会离开这台设备」这条依然成立 —— 出去的只有公开文章的地址。 */
 var NETBR = [
-  /* raw 模式：把目标地址直接拼在服务地址后面，返回的就是原文 */
+  /* raw 模式：把目标地址直接拼在服务地址后面，返回的就是原文。
+     ⚠ 这个不能删：中国日报【文章页】正文全靠它（源站不给跨域头）。
+     实测 5/5 成功，是当前唯一稳定的一个。 */
   { id: "corseu", name: "cors.eu.org", pre: "https://cors.eu.org/", mode: "raw" },
-  /* json 模式：返回 {contents:"原文…"}，要拆一层。多留一个备选，
-     单个公益服务随时可能挂掉或限流，两个都试过才算真的失败。 */
-  { id: "allorigins", name: "AllOrigins", pre: "https://api.allorigins.win/get?url=", mode: "json" }
+  /* json 模式：返回 {contents:"原文…"}，要拆一层。
+     每个都实测过，留着当备选的理由写在 name 后面，将来谁想清理能一眼看出该不该动。 */
+  { id: "allorigins", name: "AllOrigins", pre: "https://api.allorigins.win/get?url=", mode: "json" },
+  /* whateverorigin 实测 5/5 成功（比 allorigins 稳），补成第三个。
+     公益服务随时会挂，多一个就多一分「今天还能取到文章」的概率；
+     代价只是失败时多一次请求，而且只有前面都失败才会走到它。 */
+  { id: "whateverorigin", name: "whateverorigin", pre: "https://whateverorigin.org/get?url=", mode: "json" }
 ];
 /* 逐个试。**每个中转的失败原因都要留着**（tried）——
    实测两个公益中转会同时出问题（2026-09-18 当天：cors.eu.org 被 Cloudflare 限流 429、
@@ -3437,6 +3817,7 @@ function netSelfTest(cb) {
     /* --- 中转：源站不给跨域头时靠它，所以它自己通不通也得测 --- */
     ["cors.eu.org", "https://cors.eu.org/https://www.chinadaily.com.cn/china/index.html"],
     ["api.allorigins.win", "https://api.allorigins.win/get?url=" + encodeURIComponent("https://example.com")],
+    ["whateverorigin.org", "https://whateverorigin.org/get?url=" + encodeURIComponent("https://example.com")],
     /* --- 原来那批境外源：留着，用户能一眼看出是「墙」还是「应用坏了」 --- */
     ["en.wikipedia.org", "https://en.wikipedia.org/api/rest_v1/page/summary/English_language"],
     ["simple.wikipedia.org", "https://simple.wikipedia.org/api/rest_v1/page/summary/English_language"],
@@ -3446,13 +3827,16 @@ function netSelfTest(cb) {
   ];
   NETST.testing = true;
   var left = probes.length;
-  var done = function () { if (--left === 0) { NETST.testing = false; if (cb) cb(NETST.results); } };
+  var done = function () { if (--left === 0) { NETST.testing = false; netNoteSelfTest(NETST.results); save(); if (cb) cb(NETST.results); } };
   NETST.results = {};
   for (var i = 0; i < probes.length; i++) {
     (function (host, url) {
       var t0 = now();
       if (!netHostOK(url)) { NETST.results[host] = { ok: false, msg: "不在白名单内" }; done(); return; }
       if (typeof fetch !== "function") { NETST.results[host] = { ok: false, msg: "浏览器不支持 fetch" }; done(); return; }
+      /* 自测这一条不加超时保护：它要回答的正是「到底卡了多久」，
+         12 秒掐断会把「服务器很慢」误报成「不可达」。断开/被拦是立刻报错的，
+         真正会让它悬着的只有对方不回包 —— 那种情况 UI 上有「测试中」状态兜着。 */
       fetch(url, { method: "GET", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store" })
         .then(function (r) { NETST.results[host] = { ok: r.ok, msg: r.ok ? "可达" : "HTTP " + r.status, ms: now() - t0 }; done(); })
         .catch(function () { NETST.results[host] = { ok: false, msg: "不可达（断开 / 被拦 / 未放行跨域）", ms: now() - t0 }; done(); });
@@ -3725,6 +4109,7 @@ function csLoad(sid, cb) {
   var s = csOf(sid);
   if (!s) { cb({ code: "NOSRC", msg: "未知来源" }); return; }
   netGetSmart(csListURL(s), function (err, txt, ms, via) {
+    netNote(s.host, err);          /* 成功/失败都记一笔：正常使用的过程本身就是持续验证 */
     if (err) { cb(err); return; }
     var list = csPickList(s, txt);
     if (!list.length) { cb({ code: "EMPTY", msg: "这个栏目这次没取到文章，换个栏目或稍后再试" }); return; }
@@ -3737,6 +4122,7 @@ function csGrab(sid, url, cb) {
   if (!s) { cb({ code: "NOSRC", msg: "未知来源" }); return; }
   if (!netHostOK(url)) { cb({ code: "BLOCKED", msg: "这个地址不在允许列表内" }); return; }
   netGetSmart(url, function (err, html, ms, via) {
+    netNote(s.host, err);
     if (err) {
       /* 中国日报的【文章页】不给跨域头，正文只能经中转 —— 所以它比别的源多一层外部依赖。
          中转是公益服务，实测会限流甚至整体挂掉（2026-09-18 两个同时不可用）。
@@ -4080,6 +4466,97 @@ function artStat(a) {
   return a.pf;
 }
 
+/* ---------- 15c. 打开就自动取一篇（喂给首页） ----------
+ * 需求原文：「每次打开以后自动拉取文章，将文章放在主页面」。
+ *
+ * 这条需求跟「离线可用」是有张力的，所以规则得写清楚，不能只是「开机就发个请求」：
+ *   ① 尊重联网开关。用户在设置里关掉了联网 → 一个请求都不发，这是硬承诺。
+ *   ② 一天只自动取一次。这不是为了省流量，是为了不打扰：
+ *      每次回到首页都拉一篇，用户会看到列表不断变长、越来越乱，
+ *      而且「今天读什么」这个决定会被反复推翻。取一次、然后稳住。
+ *   ③ 只取一篇，不取一整个列表。自动行为应该收敛，不该替用户做一堆决定。
+ *   ④ 失败了不弹错。这是后台行为，没有人在等它。失败就静静记下原因，
+ *      等用户自己点开精读页时再如实告诉他 —— 开机弹一个红色报错是最讨人厌的做法。
+ *   ⑤ 只挑「当前网络下确实连得上」的源。按自测/使用中积累的可达性标记来选，
+ *      再去掉已经取过的同一篇，避免每天打开都看到同一篇文章。
+ */
+var AUTOA = { st: "", msg: "", art: null, day: "", busy: false };
+
+/* 挑这一轮该从哪个源取。规则：优先环球时报（全程直连、不经第三方、最快），
+   其次中国日报的各个栏目（经中转，稍慢但内容更贴中国语境）。
+   被判定不可达的一律跳过；全不可用时返回 null（调用方就此收手，不硬取）。 */
+function autoSrcPick() {
+  var gt = csOf("gt");
+  if (gt && !srcDown(gt)) return gt;
+  for (var i = 0; i < CSRC.length; i++) {
+    if (CSRC[i].kind === "cnd" && !srcDown(CSRC[i])) return CSRC[i];
+  }
+  return null;
+}
+/* 从列表里挑一篇还没读过的。
+   为什么要挑「没读过的」：自动拉取如果每次都落同一篇（栏目的头条一天内不变），
+   用户会觉得这功能是坏的。退而求其次——全读过了就取最新那篇（至少内容是对的）。 */
+function autoPickItem(list) {
+  if (!list || !list.length) return null;
+  var have = {};
+  var all = artAll();
+  for (var i = 0; i < all.length; i++) if (all[i].url) have[all[i].url] = 1;
+  for (var j = 0; j < list.length; j++) if (!have[list[j].url]) return list[j];
+  return list[0];
+}
+/* 首页上要展示「当前可读的那一篇」。这个函数只读本地数据，零网络请求 ——
+   首页是打开就渲染的，任何网络依赖都会让首屏闪一下。
+   优先级：今天自动取的那篇 > 今天最后一次精读的 > 文章库里最新的一篇。 */
+function autoArtToday() {
+  var all = artAll();
+  if (!all.length) return null;
+  var dk = todayKey();
+  if (AUTOA.art) { var a = artGet(AUTOA.art); if (a && !a.rd.done) return a; }
+  if (DB.read && DB.read.autoDay === dk && DB.read.autoId) {
+    var b = artGet(DB.read.autoId);
+    if (b) return b;
+  }
+  return all[0];
+}
+/* 开始自动取文。cb(art|null, msg) —— 成功给文章，失败给一句人话原因。
+   ⚠ 三处「不」必须同时成立才算做对：不越过联网开关、不重复取、不弹错。 */
+function autoFetchArt(cb) {
+  var dk = todayKey();
+  var done = function (art, msg) { AUTOA.busy = false; AUTOA.st = art ? "ok" : "no"; AUTOA.msg = msg || ""; if (art) AUTOA.art = art.id; if (cb) cb(art, msg); };
+
+  if (cfg().netOff) { AUTOA.st = "off"; AUTOA.msg = "联网已关闭"; if (cb) cb(null, "联网已关闭"); return; }
+  if (NETST.on === false) { AUTOA.st = "off"; AUTOA.msg = "当前离线"; if (cb) cb(null, "当前离线"); return; }
+  if (typeof fetch !== "function") { AUTOA.st = "no"; AUTOA.msg = "浏览器不支持联网"; if (cb) cb(null, "浏览器不支持联网"); return; }
+  if (AUTOA.busy) return;
+  /* 今天已经取过 → 直接把那一篇交出去，不发任何请求 */
+  if (DB.read && DB.read.autoDay === dk) {
+    var had = DB.read.autoId ? artGet(DB.read.autoId) : null;
+    if (had) { done(had, ""); return; }
+  }
+  var s = autoSrcPick();
+  if (!s) { AUTOA.st = "no"; AUTOA.msg = "当前网络下没有可用的来源"; if (cb) cb(null, AUTOA.msg); return; }
+
+  AUTOA.busy = true; AUTOA.st = "run"; AUTOA.msg = "";
+  csLoad(s.id, function (err, list) {
+    if (err) { done(null, err.hint ? err.msg + " " + err.hint : err.msg); return; }
+    var it = autoPickItem(list);
+    if (!it) { done(null, "这个栏目这次没取到文章"); return; }
+    csGrab(s.id, it.url, function (e2, r) {
+      if (e2) { done(null, e2.hint ? e2.msg + " " + e2.hint : e2.msg); return; }
+      var a = artMk({ t: r.title, ps: r.ps, src: s.src, sid: s.id, url: it.url, lic: s.lic, d: r.d || it.d });
+      a.via = r.via || "";
+      a.auto = 1;                       /* 标记：这是自动取回来的，方便「我的文章」里区分 */
+      artSave(a);
+      /* 记下「今天自动取的是哪一篇」。跨天自然失效 —— 第二天 autoDay 对不上就会再取一次，
+         而且挑的是「没读过的那篇」，不会连着几天都是同一篇。 */
+      if (!DB.read) DB.read = { arts: {}, last: "" };
+      DB.read.autoDay = dk; DB.read.autoId = a.id;
+      save(true);
+      done(a, "");
+    });
+  });
+}
+
 /* ---------- 16. 抓取适配器 ---------- */
 /* 这里刻意把「取」和「解析」拆成两层：
    fetchXxx 只负责发请求，pickXxx 是纯函数只负责把 JSON 变成文章。
@@ -4393,20 +4870,25 @@ function rdNetBarHTML() {
   } else h += '<span>只发出 GET 请求，不上传任何数据</span>';
   h += "</div>";
   if (RMSG) h += '<div class="rmsg ' + RMSG.kind + '">' + esc(RMSG.text) + (RMSG.hint ? '<span>' + esc(RMSG.hint) + "</span>" : "") + "</div>";
-  /* 自测结果 */
+  /* 自测结果。这里的文案由结果本身推导，不再写死「境外源打不开是常态」——
+     那句是 2026-09 的一次性实测记录，写死在界面上会变成一句永远正确、也永远没用的话。
+     现在改成按网管标记说话：哪个被认定不可达就点名哪个，其余正常显示。 */
   var r = NETST.results, ks = [];
   for (var k in r) if (Object.prototype.hasOwnProperty.call(r, k)) ks.push(k);
   if (ks.length) {
-    h += '<div class="rtest"><div class="secttl">源可达性</div>';
+    h += '<div class="rtest"><div class="secttl">源可达性' +
+      (NETST.testing ? ' <span class="muted" style="font-weight:400">测试中…</span>' : "") + "</div>";
     for (var i = 0; i < ks.length; i++) {
       var x = r[ks[i]];
+      var dn = hostDown(ks[i]);
       h += '<div class="rtline"><span class="rtok ' + (x.ok ? "y" : "n") + '">' + (x.ok ? "✓" : "✗") + "</span>" +
-        "<b>" + esc(ks[i]) + "</b><span>" + esc(x.msg) + (x.ms ? " · " + x.ms + "ms" : "") + "</span></div>";
+        "<b>" + esc(ks[i]) + "</b><span>" + esc(x.msg) + (x.ms ? " · " + x.ms + "ms" : "") +
+        (dn && !x.ok ? ' · <b style="color:var(--bad)">已标记不可达，相关来源已收起</b>' : "") + "</span></div>";
     }
     h += '<p class="muted" style="font-size:12px;margin:6px 0 0">' +
-      "境外那几行（维基、卫报）打不开是常态 —— 当前网络到不了它们，不是应用的问题。" +
-      "取文用下面「中国英文媒体」那一组，它们在国内网络下实测连得上。" +
-      "另外「我的文章 → 粘贴导入」完全离线、不挑来源，任何网站的文章都能贴进来精读。</p>";
+      esc("打不开的源不是「被删掉了」，是暂时收起来 —— 它的代码还在。") +
+      "换个网络（例如切到手机热点）再点一次自测，能通的话它自己就回来了。" +
+      "完全离线的退路始终在：<b>我的文章 → 粘贴导入</b>，任何来源的文章都能贴进来精读。</p>";
     h += "</div>";
   }
   return h;
@@ -4416,16 +4898,26 @@ function rdNetBarHTML() {
 function rdCNHTML() {
   var s = csOf(CSEL) || CSRC[0];
   var off = cfg().netOff || NETST.on === false;
+  /* 只列出当前网络下能用的栏目。被判定不可达的收起来，但明确说出「收起了几个」——
+     悄悄少几个按钮，用户会以为是应用坏了或者自己记错了。 */
+  var ups = [], downs = [];
+  for (var q = 0; q < CSRC.length; q++) (srcDown(CSRC[q]) ? downs : ups).push(CSRC[q]);
+  if (!ups.length) ups = CSRC;                      /* 兜底：全不可用时不要交出一个空壳 */
+  if (srcDown(s)) s = ups[0];
   var h = '<div class="secttl cnsec">中国英文媒体 <span class="cntag">大陆可达</span></div>';
   h += '<p class="muted" style="font-size:12px;margin:2px 0 8px">' +
-    "这一组是在中国大陆网络下实测<b>连得上</b>的英文媒体 —— 上面那批境外源多半打不开，" +
-    "那是网络到不了它们，不是应用坏了。取回来的文章会存进本地库，之后断网也能反复精读。</p>";
+    "这一组是实测在<b>中国大陆网络下连得上</b>的英文媒体。取回来的文章会存进本地库，之后断网也能反复精读。</p>";
   h += '<div class="cchips">';
-  for (var i = 0; i < CSRC.length; i++) {
-    h += '<button type="button" class="cchip' + (CSEL === CSRC[i].id ? " on" : "") +
-      '" data-csr="' + CSRC[i].id + '">' + esc(CSRC[i].short) + "</button>";
+  for (var i = 0; i < ups.length; i++) {
+    h += '<button type="button" class="cchip' + (CSEL === ups[i].id ? " on" : "") +
+      '" data-csr="' + ups[i].id + '">' + esc(ups[i].short) + "</button>";
   }
   h += "</div>";
+  if (downs.length) {
+    h += '<p class="muted" style="font-size:12px;margin:6px 0 0;color:var(--warn)">' +
+      esc("已收起 " + downs.length + " 个当前连不上的栏目（" + downs.map(function (x) { return x.short; }).join("、") +
+        "）。它们的代码还在，网络恢复后会自动重新出现；也可以点上面的「源可达性自测」立刻重判。") + "</p>";
+  }
   h += '<p class="muted" style="font-size:12px;margin:7px 0 8px">' + esc(s.tag) + " · 许可 " + esc(s.lic) +
     (s.rec ? ' · <b class="rec">推荐</b>' : "") + "<br>" + esc(s.note) + "</p>";
   h += '<div class="rrow"><button class="btn sm" id="rdCNLoad"' + (off || CBUSY ? " disabled" : "") + ">" +
@@ -4444,48 +4936,75 @@ function rdCNHTML() {
   } else if (CLIST) h += '<p class="empty sm">这个栏目这次没取到文章，换个栏目试试</p>';
   return h;
 }
+/* 一个源被收起时的统一交代。
+   为什么要专门写一条「不可用说明」而不是直接把那块删掉：
+   用户昨天还能点、今天按钮没了，第一反应是「应用坏了」或者「我记错了」。
+   说清楚三件事就能消掉这个疑惑 —— 是哪一块没了、为什么、怎么让它回来。 */
+function rdDownNote(name, what) {
+  return '<div class="rmsg info">' +
+    esc("已收起「" + what + "」—— " + name + " 在当前网络下连不上。") +
+    '<span>' + esc("功能没有删除：换一个网络（手机热点 / 换个运营商）后点上面的「源可达性自测」，通了它就自动回来。") +
+    "现在要读文章的话，用下面的「中国英文媒体」，或者走「我的文章 → 粘贴导入」（完全离线、不挑来源）。</span></div>";
+}
 function rdDiscoverHTML() {
   var h = "";
   var disabled = cfg().netOff || NETST.on === false;
-  /* ---- 每日内容 ---- */
-  h += '<div class="secttl">今日可读</div>';
-  h += '<div class="rrow"><button class="btn sm" id="rdPull"' + (disabled || RBUSY === "feed" ? " disabled" : "") + ">" +
-    (RBUSY === "feed" ? "取文中…" : "拉取今天的推荐") + "</button>" +
-    '<span class="muted" style="font-size:12px">维基每日精选：今日特色条目 + 时事 + 历史上的今天</span></div>';
-  if (RFEED && RFEED.length) {
-    h += '<div class="rlist">';
-    for (var i = 0; i < RFEED.length; i++) {
-      var it = RFEED[i];
-      h += '<div class="ritem"><div class="rtop"><span class="rbadge">' + esc(it.badge || "") + "</span>" +
-        '<span class="rsrc">' + esc(it.src) + "</span></div>" +
-        "<b>" + esc(it.title) + "</b>" +
-        '<p class="rmuted">' + esc(String(it.text || "").slice(0, 150)) + "…</p>" +
-        (it.host ? '<button class="btn ghost sm" data-grab="' + esc(it.host) + "|" + esc(it.title) + '">取全文精读 ›</button>' : "") +
-        (!it.host && it.text ? '<button class="btn ghost sm" data-mkfeed="' + i + '">用这段精读 ›</button>' : "") +
-        "</div>";
-    }
-    h += "</div>";
-  } else if (RFEED) h += '<p class="empty sm">今天的推荐是空的</p>';
+  /* 「今日可读」和「当日新闻稿」两块都挂在维基上。维基一旦被判定不可达，
+     这两块的按钮点了就是白等 —— 与其让人等 12 秒超时，不如直接标明并用一条
+     可用的替代路径替换它。注意【不删功能】：判定是可过期的，网络一变它们就回来。 */
+  var wikiDown = hostDown("en.wikipedia.org");
+  if (!wikiDown) {
+    /* ---- 每日内容 ---- */
+    h += '<div class="secttl">今日可读</div>';
+    h += '<div class="rrow"><button class="btn sm" id="rdPull"' + (disabled || RBUSY === "feed" ? " disabled" : "") + ">" +
+      (RBUSY === "feed" ? "取文中…" : "拉取今天的推荐") + "</button>" +
+      '<span class="muted" style="font-size:12px">维基每日精选：今日特色条目 + 时事 + 历史上的今天</span></div>';
+    if (RFEED && RFEED.length) {
+      h += '<div class="rlist">';
+      for (var i = 0; i < RFEED.length; i++) {
+        var it = RFEED[i];
+        h += '<div class="ritem"><div class="rtop"><span class="rbadge">' + esc(it.badge || "") + "</span>" +
+          '<span class="rsrc">' + esc(it.src) + "</span></div>" +
+          "<b>" + esc(it.title) + "</b>" +
+          '<p class="rmuted">' + esc(String(it.text || "").slice(0, 150)) + "…</p>" +
+          (it.host ? '<button class="btn ghost sm" data-grab="' + esc(it.host) + "|" + esc(it.title) + '">取全文精读 ›</button>' : "") +
+          (!it.host && it.text ? '<button class="btn ghost sm" data-mkfeed="' + i + '">用这段精读 ›</button>' : "") +
+          "</div>";
+      }
+      h += "</div>";
+    } else if (RFEED) h += '<p class="empty sm">今天的推荐是空的</p>';
+  } else {
+    h += '<div class="secttl">今日可读</div>';
+    h += rdDownNote("维基百科", "每日精选（特色条目 / 时事 / 历史上的今天）与当日的维基新闻稿");
+  }
   /* ---- 中国英文媒体（大陆可达） ---- */
   h += rdCNHTML();
   /* ---- 主题检索 ---- */
   h += '<div class="secttl">按主题找文章</div>';
+  /* 下拉框里只放当前网络下能用的源。原来一次性列 6 个、其中 5 个是维基家族，
+     点下去全是超时 —— 那等于把「选择」做成了「依次踩雷」。
+     注意这里【不是把源删掉】：被收起的源在自测通过后会重新出现在这个列表里。 */
+  var upS = [], downS = [];
+  for (i = 0; i < SRCS.length; i++) (srcDown(SRCS[i]) ? downS : upS).push(SRCS[i]);
+  if (!upS.length) upS = SRCS;                       /* 兜底：全不可用时不交出空下拉框 */
+  if (srcDown(srcOf(RSRC))) RSRC = upS[0].id;
   h += '<div class="rrow"><select id="rdSrc" class="rsel">';
-  for (i = 0; i < SRCS.length; i++) {
-    h += '<option value="' + SRCS[i].id + '"' + (RSRC === SRCS[i].id ? " selected" : "") + ">" + esc(SRCS[i].name) + "</option>";
+  for (i = 0; i < upS.length; i++) {
+    h += '<option value="' + upS[i].id + '"' + (RSRC === upS[i].id ? " selected" : "") + ">" + esc(upS[i].name) + "</option>";
   }
   h += "</select>" +
     '<input id="rdQ" class="rin" type="text" placeholder="比如 climate change / ancient Rome" value="' + esc(RQ) + '">' +
     '<button class="btn sm" id="rdSearch"' + (disabled || RBUSY === "search" ? " disabled" : "") + ">" + (RBUSY === "search" ? "搜索中…" : "搜索") + "</button></div>";
+  if (downS.length) {
+    h += '<p class="muted" style="font-size:12px;margin:6px 0 0;color:var(--warn)">' +
+      esc("已收起 " + downS.length + " 个当前连不上的源（" + downS.map(function (x) { return x.name; }).join("、") +
+        "）。代码都还在，网络恢复后会自动回到这个列表；也可以点上面的「源可达性自测」立刻重判。") + "</p>";
+  }
   var s = srcOf(RSRC);
   if (s) {
     h += '<p class="muted" style="font-size:12px;margin:2px 0 0">' + esc(s.tag) + " · 许可 " + esc(s.lic);
     if (s.rec) h += ' · <b class="rec">推荐</b>';
     h += "<br>" + esc(s.note) + "</p>";
-    /* 这一批源都是境外站点，实测国内网络下基本直接超时。提前讲清楚，
-       免得用户点了「搜索」在那儿等半天，还以为应用卡死了。 */
-    h += '<p class="muted" style="font-size:12px;margin:4px 0 0;color:var(--warn)">' +
-      "这一批源都在境外，国内网络下多半连不上 —— 取文建议用上面的「中国英文媒体」。</p>";
     if (s.id === "guardian" && !cfg().guardianKey) h += '<p class="rmsg bad" style="margin-top:6px">还没填卫报 API Key —— 到「设置 → 精读」里填一个（免费申请）</p>';
   }
   if (RRES && RRES.length) {
@@ -4510,16 +5029,20 @@ function rdDiscoverHTML() {
     }
   } else if (RRES) h += '<p class="empty sm">没有搜到结果，换个关键词试试</p>';
   /* ---- 当日新闻稿 ---- */
-  h += '<div class="secttl">当日新闻稿</div>';
-  h += '<div class="rrow"><button class="btn ghost sm" id="rdNews"' + (disabled || RBUSY === "news" ? " disabled" : "") + ">" +
-    (RBUSY === "news" ? "取稿中…" : "看看今天发了什么") + '</button><span class="muted" style="font-size:12px">维基新闻 · 每日更新</span></div>';
-  if (RNEWS && RNEWS.length) {
-    h += '<div class="rlist">';
-    for (i = 0; i < RNEWS.length; i++) {
-      h += '<div class="ritem"><b>' + esc(RNEWS[i].title) + "</b>" +
-        '<button class="btn ghost sm" data-grab="en.wikinews.org|' + esc(RNEWS[i].title) + '">取全文精读 ›</button></div>';
+  if (hostDown("en.wikinews.org")) {
+    h += '<div class="secttl">当日新闻稿</div>' + rdDownNote("维基新闻", "当日新闻稿列表");
+  } else {
+    h += '<div class="secttl">当日新闻稿</div>';
+    h += '<div class="rrow"><button class="btn ghost sm" id="rdNews"' + (disabled || RBUSY === "news" ? " disabled" : "") + ">" +
+      (RBUSY === "news" ? "取稿中…" : "看看今天发了什么") + '</button><span class="muted" style="font-size:12px">维基新闻 · 每日更新</span></div>';
+    if (RNEWS && RNEWS.length) {
+      h += '<div class="rlist">';
+      for (i = 0; i < RNEWS.length; i++) {
+        h += '<div class="ritem"><b>' + esc(RNEWS[i].title) + "</b>" +
+          '<button class="btn ghost sm" data-grab="en.wikinews.org|' + esc(RNEWS[i].title) + '">取全文精读 ›</button></div>';
+      }
+      h += "</div>";
     }
-    h += "</div>";
   }
   /* ---- 自定义 URL ---- */
   h += '<div class="secttl">从指定地址取文</div>';
@@ -4629,7 +5152,17 @@ function readMount() {
   });
 }
 function rdSelfTest() {
-  netSelfTest(function () { render(); toast("自测完成", "ok"); });
+  if (NETST.testing) return;
+  /* 先把上一次的结果清掉再开跑：不清的话界面上会同时出现新旧两轮的数字，
+     用户没法判断哪一行是刚才测的。NETST.results 由 netSelfTest 自己重置，
+     这里只需要给出「正在测」的状态。 */
+  NETST.results = {};
+  netSelfTest(function () {
+    render();
+    var r = NETST.results, dn = 0, up = 0;
+    for (var k in r) if (Object.prototype.hasOwnProperty.call(r, k)) { if (r[k].ok) up++; else dn++; }
+    toast("自测完成：" + up + " 个可达 · " + dn + " 个不可达" + (dn ? "（已收起的来源见列表）" : ""), dn ? "info" : "ok");
+  });
   render();
 }
 function rdPullFeed() {
@@ -4876,12 +5409,15 @@ function rdProfBar(prof) {
   return h;
 }
 /* 正文渲染：每个英文词包成可点的 span。
-   「哪个词是生词」提前算好放画像里，不在渲染时现查 —— 一篇近千词，现查会明显卡。 */
+   「哪个词是生词」提前算好放画像里，不在渲染时现查 —— 一篇近千词，现查会明显卡。
+   外层 .rbody 是行宽容器（max-width:62ch），排版规则见 CSS 里那一段注释。 */
 function rdBodyInner(a, prof) {
   var assist = clamp(cfg().readAssist || 0, 0, 3);
-  var h = "";
+  var h = '<div class="rbody">';
   for (var i = 0; i < a.ps.length; i++) {
-    h += '<div class="rpara"><span class="rpnum">' + (i + 1) + "</span>";
+    /* 逐句档需要一个额外的类：那个档位下段号要重新出现（窄屏也是），
+       而且段首不能再缩进 —— 一句一行时缩进会把第一句挤成视觉上的第二层。 */
+    h += '<div class="rpara' + (assist >= 3 ? " rsent-mode" : "") + '"><span class="rpnum">' + (i + 1) + "</span>";
     if (assist >= 3) {
       var ss = splitSents(a.ps[i]);
       for (var j = 0; j < ss.length; j++) h += '<p class="rsent">' + rdInline(ss[j], prof, assist) + "</p>";
@@ -4890,7 +5426,7 @@ function rdBodyInner(a, prof) {
     }
     h += "</div>";
   }
-  return h;
+  return h + "</div>";
 }
 function rdInline(text, prof, assist) {
   var out = "", last = 0, m;
@@ -6659,9 +7195,41 @@ function vSettings() {
     '<div class="setrow"><div class="setrow-t"><b>学习顺序</b><span>学哪些词不变，先学哪个每轮重新排；「智能随机」让遗忘风险高的仍然更靠前</span></div><div class="seg">' +
     [["smart", "智能随机"], ["random", "完全随机"], ["order", "固定顺序"]].map(function (o) {
       return '<button data-order="' + o[0] + '"' + (c.queueOrder === o[0] ? ' class="on"' : "") + ">" + o[1] + "</button>";
+    }).join("") + "</div></div>";
+
+  /* ---- 背词模式（统一入口）----
+     这一块是用户那句「背词模式实在太混乱了」的直接回应。
+     原来设置页只有「启用题型」六个按钮 —— 用户面对的是**六个名词**，
+     得先在脑子里把「看义选词」翻译成「我到底想练什么」，才能决定按不按它。
+     现在改成**两个问题**：先给哪一面（方向）、要你做什么（动作）。
+     两个都答完，题型由派生函数自动算出来 —— 用户不需要知道题型名。
+
+     关键设计：这一块**只改 cfg，不直接改 activeModes**。
+     派生发生在 pickModeIdx 里（每张卡现算），所以设置和实际渲染不可能不一致。
+     反过来，如果这里顺手去写 activeModes，就会有两份真相，
+     下次用户在「启用题型」里手动勾一下，两边立刻打架 —— 那正是旧的混乱来源。 */
+  h += '<div class="card"><div class="card-h"><h2>背词模式</h2><span class="hint">统一设置：先给哪一面 · 要你做什么</span></div>' +
+    '<div class="setrow"><div class="setrow-t"><b>先给你哪一面</b><span>决定每一张卡先露出单词还是先露出释义</span></div><div class="seg">' +
+    [["w2m", "先单词"], ["m2w", "先释义"], ["mix", "交替"]].map(function (o) {
+      return '<button data-vmode="' + o[0] + '"' + (c.vmode === o[0] ? ' class="on"' : "") + ">" + o[1] + "</button>";
     }).join("") + "</div></div>" +
-    '<div class="setrow"><div class="setrow-t"><b>启用题型</b><span>学习时会轮换这些题型（按卡片顺序循环）</span></div></div>' +
-    '<div class="row wrap" style="gap:8px;padding-bottom:6px">' +
+    '<div class="setrow"><div class="setrow-t"><b>要你做什么</b><span>「选一个」有提示、最简单；「只想一想」不给选项、最接近真实回忆</span></div><div class="seg">' +
+    [["auto", "按题型轮换"], ["recall", "只想一想"], ["choice", "选一个"], ["spell", "写出来"], ["listen", "听出来"]].map(function (o) {
+      return '<button data-vask="' + o[0] + '"' + (c.vask === o[0] ? ' class="on"' : "") + ">" + o[1] + "</button>";
+    }).join("") + "</div></div>" +
+    '<div class="setrow"><div class="setrow-t"><b>先盖住答案</b><span>「只想一想」时，答案等你揭晓才出现 —— 强制先回想一遍，记得更牢；关掉就变成「看一眼确认」</span></div>' +
+    '<label class="switch"><input type="checkbox" data-sw="vflipFirst"' + (c.vflipFirst ? " checked" : "") + '><i></i></label></div>' +
+    /* 这一段是「改完能看见结果」的关键。
+       用户原来改完设置页，界面上没有任何地方能回答「我现在到底是什么模式」——
+       只能回去学习、看第一张卡长什么样，试错成本太高。 */
+    '<div class="setrow"><div class="setrow-t"><b>现在是这样</b><span data-vdesc>' + esc(vmodeDesc()) + "</span></div></div>" +
+    '<div class="tiny faint" style="padding-bottom:8px">' +
+    esc("两个都选完之后，题型由它们自动推导（看词选义 / 看义想词 / 拼写 / 听音辨词…），不需要你再去下面挑。") +
+    "<br>" +
+    esc("推导出来的题型如果这个设备或这个词做不了，会自动顺延到下一个能做的，并说明跳过原因。") +
+    "</div></div></div>";
+  h += '<div class="card"><div class="card-h"><h2>启用题型</h2><span class="hint">按卡片顺序循环 · 上面选了方向与动作时，这里只在「按题型轮换」档生效</span></div>' +
+    '<div class="row wrap" style="gap:8px;padding:4px 0 6px">' +
     MODES.map(function (m) {
       var on = c.activeModes.indexOf(m[0]) >= 0;
       return '<button class="btn sm' + (on ? " primary" : "") + '" data-mode="' + m[0] + '">' + m[1] + "</button>";
@@ -6671,7 +7239,6 @@ function vSettings() {
     "<br>" +
     esc("不满足时不会卡住 —— 这一张自动顺延到下一个能做的题型，并会告诉你跳过原因。") +
     "</div></div>";
-
   /* 考试倒计时：把「每天学多少」从拍脑袋变成倒推。
      日期输入用 type="text" 而不是 type="date" —— 后者在安卓 WebView 里表现不一致，
      而且中文环境下占位符会跟着系统语言变；text + 自己校验，行为完全可控。 */
@@ -6958,6 +7525,28 @@ function bindSettings() {
       toast("学习顺序：" + orderName(cfg().queueOrder), "ok");
     };
   });
+  /* 背词模式：方向与动作。
+     ⚠ 每次点完都要**就地刷新「现在是这样」那句说明**（引用行里的普通 span，
+       没有 id，所以按文案定位）。不刷新的话，用户改完方向、说明还写着旧值 ——
+       这种「设置回显不同步」正是原来让人困惑的地方之一，不能在新做的入口里重演。 */
+  function refreshVModeDesc() {
+    var row = document.querySelector("[data-vdesc]");
+    if (row) row.textContent = vmodeDesc();
+  }
+  document.querySelectorAll("[data-vmode]").forEach(function (b) {
+    b.onclick = function () {
+      cfg().vmode = b.getAttribute("data-vmode");
+      pickInGroup("[data-vmode]", "data-vmode", cfg().vmode, "on");
+      refreshVModeDesc(); save(true);
+    };
+  });
+  document.querySelectorAll("[data-vask]").forEach(function (b) {
+    b.onclick = function () {
+      cfg().vask = b.getAttribute("data-vask");
+      pickInGroup("[data-vask]", "data-vask", cfg().vask, "on");
+      refreshVModeDesc(); save(true);
+    };
+  });
   /* 精读设置：门槛与档位都是「就地切换 + 存储」，跟上面一样不重绘整页 */
   document.querySelectorAll("[data-rgate]").forEach(function (b) {
     b.onclick = function () {
@@ -7183,6 +7772,13 @@ function init() {
   render();
   if (!WORDS.length) toast("词库为空，请检查数据文件", "bad");
 
+  /* ---- 打开就自动取一篇（「每次打开以后自动拉取文章」）----
+     时机上必须放在首屏渲染【之后】：先让用户看到今日用量和打卡进度，
+     再去慢慢取文章。反过来的话，网络慢的时候整个应用像卡在启动画面上。
+     整个流程不阻塞任何东西：取到了就 render() 一次把卡片换成文章，
+     取不到就只更新卡片上的那句说明。 */
+  autoFetchArt(function () { if (cur === "today" && !JSTACK.length) render(); });
+
   /* ---- 返回键钩子（给 Android 原生壳用） ----
      这个应用是纯 JS 状态路由：没有 location.hash、没有 history.pushState，
      视图切换全在内存里（JSTACK 栈 + cur）。后果是 WebView 的 canGoBack() 永远为 false，
@@ -7386,7 +7982,34 @@ window.__WFAPI = {
   qzDone: qzDone, qzTotal: qzTotal,
   netState: function () { return NETST; },
   readStat: function () { return RA; },
-  RD_TAB: function () { return RTAB; }, RD_SET: function (t) { RTAB = t; }
+  RD_TAB: function () { return RTAB; }, RD_SET: function (t) { RTAB = t; },
+  /* ---- 背词模式（方向 × 动作）：纯函数，可喂参数断言 ----
+     这些必须导出，因为「设置页选了什么」和「实际出什么题」是**两处独立渲染**，
+     只有把派生函数本身拿出来喂进 (方向, 动作, 序号) 直接算期望值，
+     才验得出「设置写了看义想词、出的题却还是看词选义」这种静默错位。
+     光断言设置页那几个按钮的高亮状态是抓不住的 —— 那种断言只证明 UI 记得住点击。 */
+  pickModeIdx: function (i) { return pickModeIdx(i); },
+  pickMode: pickMode, curMode: curMode, modeFromPair: modeFromPair,
+  dirAt: function (i) { return dirAt(i); },
+  vmodeDesc: vmodeDesc, ASK_NAME: ASK_NAME, DIR_NAME: DIR_NAME,
+  recallCardBody: recallCardBody, modeTag: modeTag, cardBody: cardBody,
+  /* ---- 来源可达性（应用内自测为准）----
+     门槛计数与「该不该收起」的判断全是纯函数，可以造一份假的失败记录直接断言，
+     不必真断网。hostDown 判的是**主机**不是来源 id —— China Daily 五个栏目共用一个主机，
+     按 id 判的话会漏掉「同一个主机明明挂了、另外四栏还在列表里」。 */
+  hostDown: function (h) { return hostDown(h); },
+  srcDown: function (s) { return srcDown(s); },
+  srcAnyUp: function (l) { return srcAnyUp(l); },
+  netFailMap: netFailMap, netUnavailMap: netUnavailMap,
+  netNote: function (h, e) { return netNote(h, e); },
+  netNoteSelfTest: function (rs) { return netNoteSelfTest(rs); },
+  STRIKES: STRIKES, UNAVAIL_TTL: UNAVAIL_TTL,
+  /* ---- 打开即取文章 ---- */
+  autoFetchArt: autoFetchArt, autoArtToday: autoArtToday,
+  autoSrcPick: autoSrcPick, autoPickItem: autoPickItem,
+  AUTO: function () { return AUTOA; },
+  setAUTO: function (k, v) { AUTOA[k] = v; },
+  readHomeCardHTML: readHomeCardHTML
 };
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
 else init();

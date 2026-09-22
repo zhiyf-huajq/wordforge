@@ -664,19 +664,67 @@ label.fld .desc{font-size:11.5px;color:var(--text-faint);margin-top:5px;line-hei
 .rlab{font-size:12px;color:var(--text-faint);margin-right:2px}
 .ras{border:1px solid var(--border);background:var(--panel-2);color:var(--text-dim);padding:5px 11px;border-radius:999px;font-size:12.5px;cursor:pointer;font-family:inherit;transition:all var(--dur)}
 .ras.on{background:var(--accent);color:var(--accent-text);border-color:var(--accent)}
-/* 正文排版：行距放宽、段落编号靠左，接近纸质书的阅读密度 */
-.rpara{position:relative;padding-left:32px;margin-bottom:17px}
-.rpnum{position:absolute;left:0;top:5px;width:22px;text-align:right;font-size:10.5px;color:var(--text-faint);font-family:var(--mono)}
-.rtext{font-family:var(--word-font);font-size:17px;line-height:1.95;margin:0;color:var(--text)}
-.rsent{font-family:var(--word-font);font-size:17px;line-height:1.85;margin:0 0 9px;color:var(--text)}
+/* ---------- 正文排版（精读台的核心，改这里等于改整个产品的阅读手感）----------
+   三段式：① 测量宽度 ② 段落与缩进 ③ 逐词标记。
+   这一版把四处具体问题一次改掉，每处都写了「原来怎样、为什么不行」：
+
+   ①【行宽无上限】原来是满宽。桌面上 1200px 宽屏一行能塞 130 多个字符，
+     读第二行时眼睛找不到第一行的起点（排版上叫 measure 过长）。
+     正文用 ch 单位限宽 —— ch 是「数字 0 的宽度」，和字号绑定，
+     所以用户调大字号时行宽会跟着变宽，字符数（也就是阅读节奏）保持不变。
+     62ch 是实测舒服的区间（中文排版的 30–40 字/行换到英文大致是这个量级）。
+   ②【首行不缩进】原来段落之间只靠 margin 分隔。英文长文里，段首缩进是
+     读者判断「新段落开始了」的第一线索，尤其在行距大的时候比空白更有效。
+     两样一起用（缩进 + 间距），扫读时定位快很多。缩进用 em 而不是 px：
+     跟着字号走，用户调大字号时缩进不会变得微不足道。
+   ③【行高过松】1.95 在高字号下会让段落「散架」，读起来上下不连。
+     收到 1.78 并把段间距加大到 1.05em —— 行内紧、段间松，这是长文的标准配比
+     （行内靠行高连成一条线，段间靠间距断开）。正文页统一用一套值。
+   ④【段号在窄屏白占 32px】原来固定 padding-left:32px，360px 手机上正文
+     少掉近 9% 宽度。改成 >=720px 才让段号占位、窄屏把段号并进段首。
+   ⑤【每行都能点，但点不到】.rw 只有 1px 内边距，触屏上目标太小。
+     手机上加了纵向补偿（不影响排版），桌面维持原样。 */
+.rbody{max-width:62ch}
+.rpara{position:relative;padding-left:0;margin-bottom:1.05em;text-indent:1.6em}
+.rpara:last-child{margin-bottom:0}
+.rpnum{display:none}
+.rtext{font-family:var(--word-font);font-size:17px;line-height:1.78;margin:0;color:var(--text);text-indent:1.6em;hyphens:auto;-webkit-hyphens:auto}
+.rsent{font-family:var(--word-font);font-size:17px;line-height:1.8;margin:0 0 .62em;color:var(--text);text-indent:0}
+.rsent:last-child{margin-bottom:0}
+/* 逐句档：句子左对齐、段号在窄屏也占位（一句一行的排版本来就需要明确的行首锚点） */
+.rpara.rsent-mode{text-indent:0}
+.rpara.rsent-mode .rpnum{display:block}
+@media(min-width:720px){
+  /* 宽屏才给段号留位置。这时空间够，段号能帮读者记住「读到第几段了」 */
+  .rpara{padding-left:34px;text-indent:0}
+  .rpnum{display:block;position:absolute;left:0;top:6px;width:22px;text-align:right;
+    font-size:10.5px;color:var(--text-faint);font-family:var(--mono);letter-spacing:.02em}
+  /* 宽屏有段号时取消首行缩进 —— 段号本身就是「新段落」的标记，
+     再叠一个缩进会变成双重提示，反而显得空 */
+  .rtext{text-indent:0}
+}
 .rw{cursor:pointer;border-radius:3px;padding:0 1px;transition:background var(--dur)}
 .rw:hover{background:var(--accent-soft)}
+@media(hover:none){
+  /* 触屏没有 hover，用手指点词是最主要的交互。纵向补偿 0.16em 让可点区域
+     接近 44px 的推荐下限，同时横向不动（横向加宽会改变字间距，看着像排版坏了）。 */
+  .rw{padding:0.16em 1px}
+}
 .rw-new{border-bottom:1.5px dashed var(--accent)}
 /* 行内释义：原来写死在 white-space:nowrap，长释义（尤其带「（X 的变形）」尾巴的）
    在窄屏上会直接撑破正文容器 —— 手机上就是一段文字被裁掉。
    改成允许换行 + anywhere 断词，短释义依然不会被拆（只有实在放不下才断）；
    box-decoration-break:clone 保证折成两行时每行的圆角底色都是完整的。 */
 .rcn{font-style:normal;font-size:12px;color:var(--accent-2);background:var(--accent-soft);border-radius:3px;padding:0 4px;margin:0 2px 0 1px;white-space:normal;overflow-wrap:anywhere;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+/* 首页「今日精读」卡 + 取文骨架屏。
+   骨架屏是给「正在取今天的文章…」用的 —— 那一段可能持续好几秒（经中转更慢），
+   不给任何视觉占位的话，用户看到的是一句静止的说明，会以为没反应。 */
+.rhome .rtitle{font-family:var(--word-font)}
+.rskel{display:flex;flex-direction:column;gap:7px;margin:10px 0 2px}
+.rskel i{height:11px;border-radius:5px;background:var(--panel-3);display:block;
+  animation:rskel 1.25s ease-in-out infinite}
+.rskel i:last-child{animation-delay:.18s}
+@keyframes rskel{0%,100%{opacity:.45}50%{opacity:.9}}
 /* 点词弹窗 */
 .wpop-ph{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--text-dim);font-family:var(--mono);margin-bottom:8px}
 .wpop-ph .pp b{color:var(--text-faint);font-weight:500;margin-right:2px;font-family:var(--sans)}

@@ -1362,9 +1362,41 @@ function vSettings() {
     '<div class="setrow"><div class="setrow-t"><b>学习顺序</b><span>学哪些词不变，先学哪个每轮重新排；「智能随机」让遗忘风险高的仍然更靠前</span></div><div class="seg">' +
     [["smart", "智能随机"], ["random", "完全随机"], ["order", "固定顺序"]].map(function (o) {
       return '<button data-order="' + o[0] + '"' + (c.queueOrder === o[0] ? ' class="on"' : "") + ">" + o[1] + "</button>";
+    }).join("") + "</div></div>";
+
+  /* ---- 背词模式（统一入口）----
+     这一块是用户那句「背词模式实在太混乱了」的直接回应。
+     原来设置页只有「启用题型」六个按钮 —— 用户面对的是**六个名词**，
+     得先在脑子里把「看义选词」翻译成「我到底想练什么」，才能决定按不按它。
+     现在改成**两个问题**：先给哪一面（方向）、要你做什么（动作）。
+     两个都答完，题型由派生函数自动算出来 —— 用户不需要知道题型名。
+
+     关键设计：这一块**只改 cfg，不直接改 activeModes**。
+     派生发生在 pickModeIdx 里（每张卡现算），所以设置和实际渲染不可能不一致。
+     反过来，如果这里顺手去写 activeModes，就会有两份真相，
+     下次用户在「启用题型」里手动勾一下，两边立刻打架 —— 那正是旧的混乱来源。 */
+  h += '<div class="card"><div class="card-h"><h2>背词模式</h2><span class="hint">统一设置：先给哪一面 · 要你做什么</span></div>' +
+    '<div class="setrow"><div class="setrow-t"><b>先给你哪一面</b><span>决定每一张卡先露出单词还是先露出释义</span></div><div class="seg">' +
+    [["w2m", "先单词"], ["m2w", "先释义"], ["mix", "交替"]].map(function (o) {
+      return '<button data-vmode="' + o[0] + '"' + (c.vmode === o[0] ? ' class="on"' : "") + ">" + o[1] + "</button>";
     }).join("") + "</div></div>" +
-    '<div class="setrow"><div class="setrow-t"><b>启用题型</b><span>学习时会轮换这些题型（按卡片顺序循环）</span></div></div>' +
-    '<div class="row wrap" style="gap:8px;padding-bottom:6px">' +
+    '<div class="setrow"><div class="setrow-t"><b>要你做什么</b><span>「选一个」有提示、最简单；「只想一想」不给选项、最接近真实回忆</span></div><div class="seg">' +
+    [["auto", "按题型轮换"], ["recall", "只想一想"], ["choice", "选一个"], ["spell", "写出来"], ["listen", "听出来"]].map(function (o) {
+      return '<button data-vask="' + o[0] + '"' + (c.vask === o[0] ? ' class="on"' : "") + ">" + o[1] + "</button>";
+    }).join("") + "</div></div>" +
+    '<div class="setrow"><div class="setrow-t"><b>先盖住答案</b><span>「只想一想」时，答案等你揭晓才出现 —— 强制先回想一遍，记得更牢；关掉就变成「看一眼确认」</span></div>' +
+    '<label class="switch"><input type="checkbox" data-sw="vflipFirst"' + (c.vflipFirst ? " checked" : "") + '><i></i></label></div>' +
+    /* 这一段是「改完能看见结果」的关键。
+       用户原来改完设置页，界面上没有任何地方能回答「我现在到底是什么模式」——
+       只能回去学习、看第一张卡长什么样，试错成本太高。 */
+    '<div class="setrow"><div class="setrow-t"><b>现在是这样</b><span data-vdesc>' + esc(vmodeDesc()) + "</span></div></div>" +
+    '<div class="tiny faint" style="padding-bottom:8px">' +
+    esc("两个都选完之后，题型由它们自动推导（看词选义 / 看义想词 / 拼写 / 听音辨词…），不需要你再去下面挑。") +
+    "<br>" +
+    esc("推导出来的题型如果这个设备或这个词做不了，会自动顺延到下一个能做的，并说明跳过原因。") +
+    "</div></div></div>";
+  h += '<div class="card"><div class="card-h"><h2>启用题型</h2><span class="hint">按卡片顺序循环 · 上面选了方向与动作时，这里只在「按题型轮换」档生效</span></div>' +
+    '<div class="row wrap" style="gap:8px;padding:4px 0 6px">' +
     MODES.map(function (m) {
       var on = c.activeModes.indexOf(m[0]) >= 0;
       return '<button class="btn sm' + (on ? " primary" : "") + '" data-mode="' + m[0] + '">' + m[1] + "</button>";
@@ -1374,7 +1406,6 @@ function vSettings() {
     "<br>" +
     esc("不满足时不会卡住 —— 这一张自动顺延到下一个能做的题型，并会告诉你跳过原因。") +
     "</div></div>";
-
   /* 考试倒计时：把「每天学多少」从拍脑袋变成倒推。
      日期输入用 type="text" 而不是 type="date" —— 后者在安卓 WebView 里表现不一致，
      而且中文环境下占位符会跟着系统语言变；text + 自己校验，行为完全可控。 */
@@ -1661,6 +1692,28 @@ function bindSettings() {
       toast("学习顺序：" + orderName(cfg().queueOrder), "ok");
     };
   });
+  /* 背词模式：方向与动作。
+     ⚠ 每次点完都要**就地刷新「现在是这样」那句说明**（引用行里的普通 span，
+       没有 id，所以按文案定位）。不刷新的话，用户改完方向、说明还写着旧值 ——
+       这种「设置回显不同步」正是原来让人困惑的地方之一，不能在新做的入口里重演。 */
+  function refreshVModeDesc() {
+    var row = document.querySelector("[data-vdesc]");
+    if (row) row.textContent = vmodeDesc();
+  }
+  document.querySelectorAll("[data-vmode]").forEach(function (b) {
+    b.onclick = function () {
+      cfg().vmode = b.getAttribute("data-vmode");
+      pickInGroup("[data-vmode]", "data-vmode", cfg().vmode, "on");
+      refreshVModeDesc(); save(true);
+    };
+  });
+  document.querySelectorAll("[data-vask]").forEach(function (b) {
+    b.onclick = function () {
+      cfg().vask = b.getAttribute("data-vask");
+      pickInGroup("[data-vask]", "data-vask", cfg().vask, "on");
+      refreshVModeDesc(); save(true);
+    };
+  });
   /* 精读设置：门槛与档位都是「就地切换 + 存储」，跟上面一样不重绘整页 */
   document.querySelectorAll("[data-rgate]").forEach(function (b) {
     b.onclick = function () {
@@ -1886,6 +1939,13 @@ function init() {
   render();
   if (!WORDS.length) toast("词库为空，请检查数据文件", "bad");
 
+  /* ---- 打开就自动取一篇（「每次打开以后自动拉取文章」）----
+     时机上必须放在首屏渲染【之后】：先让用户看到今日用量和打卡进度，
+     再去慢慢取文章。反过来的话，网络慢的时候整个应用像卡在启动画面上。
+     整个流程不阻塞任何东西：取到了就 render() 一次把卡片换成文章，
+     取不到就只更新卡片上的那句说明。 */
+  autoFetchArt(function () { if (cur === "today" && !JSTACK.length) render(); });
+
   /* ---- 返回键钩子（给 Android 原生壳用） ----
      这个应用是纯 JS 状态路由：没有 location.hash、没有 history.pushState，
      视图切换全在内存里（JSTACK 栈 + cur）。后果是 WebView 的 canGoBack() 永远为 false，
@@ -2089,7 +2149,34 @@ window.__WFAPI = {
   qzDone: qzDone, qzTotal: qzTotal,
   netState: function () { return NETST; },
   readStat: function () { return RA; },
-  RD_TAB: function () { return RTAB; }, RD_SET: function (t) { RTAB = t; }
+  RD_TAB: function () { return RTAB; }, RD_SET: function (t) { RTAB = t; },
+  /* ---- 背词模式（方向 × 动作）：纯函数，可喂参数断言 ----
+     这些必须导出，因为「设置页选了什么」和「实际出什么题」是**两处独立渲染**，
+     只有把派生函数本身拿出来喂进 (方向, 动作, 序号) 直接算期望值，
+     才验得出「设置写了看义想词、出的题却还是看词选义」这种静默错位。
+     光断言设置页那几个按钮的高亮状态是抓不住的 —— 那种断言只证明 UI 记得住点击。 */
+  pickModeIdx: function (i) { return pickModeIdx(i); },
+  pickMode: pickMode, curMode: curMode, modeFromPair: modeFromPair,
+  dirAt: function (i) { return dirAt(i); },
+  vmodeDesc: vmodeDesc, ASK_NAME: ASK_NAME, DIR_NAME: DIR_NAME,
+  recallCardBody: recallCardBody, modeTag: modeTag, cardBody: cardBody,
+  /* ---- 来源可达性（应用内自测为准）----
+     门槛计数与「该不该收起」的判断全是纯函数，可以造一份假的失败记录直接断言，
+     不必真断网。hostDown 判的是**主机**不是来源 id —— China Daily 五个栏目共用一个主机，
+     按 id 判的话会漏掉「同一个主机明明挂了、另外四栏还在列表里」。 */
+  hostDown: function (h) { return hostDown(h); },
+  srcDown: function (s) { return srcDown(s); },
+  srcAnyUp: function (l) { return srcAnyUp(l); },
+  netFailMap: netFailMap, netUnavailMap: netUnavailMap,
+  netNote: function (h, e) { return netNote(h, e); },
+  netNoteSelfTest: function (rs) { return netNoteSelfTest(rs); },
+  STRIKES: STRIKES, UNAVAIL_TTL: UNAVAIL_TTL,
+  /* ---- 打开即取文章 ---- */
+  autoFetchArt: autoFetchArt, autoArtToday: autoArtToday,
+  autoSrcPick: autoSrcPick, autoPickItem: autoPickItem,
+  AUTO: function () { return AUTOA; },
+  setAUTO: function (k, v) { AUTOA[k] = v; },
+  readHomeCardHTML: readHomeCardHTML
 };
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
 else init();

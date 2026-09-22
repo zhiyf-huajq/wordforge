@@ -2122,6 +2122,249 @@ p("[23] 词汇量测试（阶梯自适应 · 自评二选一 + 假词陷阱）")
     API.setNetTimeout(12000);
   }
 
+  /* ---- [24] 统一背词模式（方向 × 动作） ----
+     这一节存在的理由：「设置页选了什么」和「实际出什么题」是两处独立渲染。
+     只断言设置页按钮的高亮状态，只能证明 UI 记住了点击，证明不了它影响出题。
+     所以这里把派生函数本身拿出来喂参数算期望值，再跟实际取到的题型比。 */
+  p("");
+  p("[24] 背词模式（方向 × 动作 派生题型）");
+
+  const VMODES = ["w2m", "m2w", "mix"], VASKS = ["auto", "recall", "choice", "spell", "listen"];
+  t("三条方向轴齐全（先单词 / 先释义 / 交替）", VMODES.every((v) => v in API.DIR_NAME), Object.keys(API.DIR_NAME));
+  t("五个动作齐全（自动 / 只想 / 选一个 / 写出来 / 听出来）", VASKS.every((v) => v in API.ASK_NAME), Object.keys(API.ASK_NAME));
+  t("默认方向是「交替」（不在两个极端里选边站）", API.CFG_DEF.vmode === "mix", API.CFG_DEF.vmode);
+  t("默认动作是「按题型轮换」（等于旧行为，老用户升级不觉得变了）", API.CFG_DEF.vask === "auto", API.CFG_DEF.vask);
+  t("默认先盖住答案（「只想一想」的摩擦力才是它的意义）", API.CFG_DEF.vflipFirst === true, API.CFG_DEF.vflipFirst);
+
+  /* 方向：固定两端必须恒定，交替必须真的交替 —— 且不能连着同向 */
+  API.setCfg("vmode", "w2m");
+  t("w2m 下逐张都是「先单词」", [0, 1, 2, 3, 4].every((i) => API.dirAt(i) === "w2m"));
+  API.setCfg("vmode", "m2w");
+  t("m2w 下逐张都是「先释义」", [0, 1, 2, 3, 4].every((i) => API.dirAt(i) === "m2w"));
+  API.setCfg("vmode", "mix");
+  const mixDirs = [0, 1, 2, 3, 4, 5].map((i) => API.dirAt(i));
+  t("mix 下两个方向都出现（不是恒定成一个）", mixDirs.indexOf("w2m") >= 0 && mixDirs.indexOf("m2w") >= 0, mixDirs.join(","));
+  t("mix 不会连着两张同向（按序号交替而不是随机）",
+    mixDirs.every((d, i) => i === 0 || d !== mixDirs[i - 1]), mixDirs.join(","));
+
+  /* 动作 × 方向 → 题型。这是「统一设置」的核心契约。 */
+  const r0 = API.words()[0];
+  const canS = API.modeOK("spell", r0), canL = API.modeOK("listen", r0), canC = API.modeOK("cloze", r0);
+  API.setCfg("vask", "choice");
+  t("选一个 + 先单词 → 看词选义", API.modeFromPair("w2m", "choice", canS, canL, canC) === "recog");
+  t("选一个 + 先释义 → 看义选词（**这一条就是用户点名要的反方向**）",
+    API.modeFromPair("m2w", "choice", canS, canL, canC) === "recall");
+  API.setCfg("vask", "recall");
+  t("只想一想 + 先单词 → 卡片速记", API.modeFromPair("w2m", "recall", canS, canL, canC) === "card");
+  t("只想一想 + 先释义 → 看义想词（不是选择题，没有选项喂答案）",
+    API.modeFromPair("m2w", "recall", canS, canL, canC) === "recallCard");
+  t("看义想词在题型名表里有可读名字（漏了界面会显示原始 key）",
+    API.modeTag("recallCard").indexOf("recallCard") < 0 && API.modeTag("recallCard").indexOf("看义想词") >= 0,
+    API.modeTag("recallCard"));
+  t("看义想词有正文渲染分支（否则会掉进兜底卡片、方向白设）",
+    typeof API.recallCardBody === "function" && (API.recallCardBody(r0) || "").length > 0);
+  t("看义想词的题干是释义、答案区才是单词（方向必须体现在渲染顺序上）",
+    (function () {
+      const b = API.recallCardBody(r0);
+      const iDef = b.indexOf("w-def"), iW = b.indexOf("w-word");
+      return iDef >= 0 && iW >= 0 && iDef < iW;
+    })());
+  t("看义想词在没有会话时也不抛异常（渲染不该依赖 S 一定存在）",
+    (function () { try { API.recallCardBody(r0); return true; } catch (e) { return false; } })());
+
+  /* 推导出的题型仍要过 modeOK 那一关 —— 两种前置条件必须叠加，不能互相绕过 */
+  API.setCfg("vask", "spell");
+  t("写出来 + 先释义 → 不返回 spell（会变成听写），交给顺延",
+    API.modeFromPair("m2w", "spell", canS, canL, canC) === null);
+  API.setCfg("vask", "listen");
+  t("听出来 + 设备没语音 → 不返回 listen，交给顺延",
+    API.modeFromPair("w2m", "listen", canS, false, canC) === null);
+  t("听出来 + 设备有语音 → 返回 listen", API.modeFromPair("w2m", "listen", canS, true, canC) === "listen");
+  API.setCfg("vask", "auto");
+  t("按题型轮换这一档不参与派生（走原来的 activeModes 轮换）",
+    API.modeFromPair("w2m", "auto", canS, canL, canC) === null);
+
+  /* 端到端：改了设置，pickModeIdx 出来的题型必须跟着变。
+     这是唯一能抓住「设置只管界面、不管出题」那种静默失效的断言。 */
+  API.startSession("all");
+  if (API.session() && API.session().queue.length > 0) {
+    API.setCfg("vmode", "m2w"); API.setCfg("vask", "choice");
+    const mA = API.pickModeIdx(0);
+    API.setCfg("vmode", "w2m");
+    const mB = API.pickModeIdx(0);
+    t("同一张卡：改成「先释义」后题型确实换了（设置真的影响出题）", mA !== mB, mA + " → " + mB);
+    t("改完方向后取到的是合法题型名", typeof mA === "string" && typeof mB === "string", [mA, mB]);
+    API.setCfg("vask", "spell");
+    const mC = API.pickModeIdx(0);
+    t("改成「写出来」后题型也变（不是只有方向生效）", mC !== mB || mC === "spell", mC);
+    API.setCfg("vask", "auto"); API.setCfg("vmode", API.CFG_DEF.vmode);
+  }
+
+  /* ---- [25] 来源可达性（应用内自测为准） ---- */
+  p("");
+  p("[25] 来源可达性门槛（连续失败才收起 · 按主机判 · 中转永不收起）");
+
+  t("需要连续失败 2 次才判不可达（单次抖动不该被当成挂了）", API.STRIKES === 2, API.STRIKES);
+  t("不可达有有效期（网络变好后会自动恢复，不是永久拉黑）",
+    API.UNAVAIL_TTL > 0 && API.UNAVAIL_TTL <= 24 * 3600e3, API.UNAVAIL_TTL);
+
+  /* ⚠ 失败计数与不可达标记都存在 cfg().__netFail / cfg().__netUnavail 里
+     （随主库持久化），**不在 NETST 上**。早先这里误写成 st.fail，会有两个后果：
+     ① 造的状态根本没被 hostDown 读到 → 断言全按「没有记录」跑，等于没测；
+     ② 更糟的是「不可达」那条会恒假通过。所以必须走真正的存储接口。 */
+  function setFail(host, n) {
+    const f = API.netFailMap();
+    if (n === 0) delete f[host]; else f[host] = n;
+  }
+  function setUn(host, t) {
+    const u = API.netUnavailMap();
+    if (t === null) delete u[host]; else u[host] = t;
+  }
+  function clearAll() {
+    const f = API.netFailMap(), u = API.netUnavailMap();
+    Object.keys(f).forEach((k) => delete f[k]);
+    Object.keys(u).forEach((k) => delete u[k]);
+  }
+  const saveF = JSON.parse(JSON.stringify(API.netFailMap() || {}));
+  const saveU = JSON.parse(JSON.stringify(API.netUnavailMap() || {}));
+  try {
+    clearAll();
+    const HOST = "en.wikipedia.org";
+
+    t("没有失败记录时不算不可达", !API.hostDown(HOST));
+    setFail(HOST, API.STRIKES - 1);
+    t("失败次数不到门槛时仍算可达（第 1 次不算）", !API.hostDown(HOST), API.netFailMap()[HOST]);
+    setFail(HOST, API.STRIKES);
+    setUn(HOST, Date.now());
+    t("达到门槛后判为不可达", API.hostDown(HOST));
+
+    /* 超时（TTL）到点必须自动恢复 */
+    setUn(HOST, Date.now() - API.UNAVAIL_TTL - 1);
+    t("超过有效期后自动恢复可达（网络变好会自己回来）", !API.hostDown(HOST));
+
+    /* 策略性拒绝不该被记成「网络不可达」—— 那不是取不到，是不该发。
+       这一条要是写错，用户关一下联网开关回来会发现源全没了。 */
+    clearAll();
+    API.netNote(HOST, { code: "BLOCKED" });
+    API.netNote(HOST, { code: "OFF" });
+    API.netNote(HOST, { code: "NOFETCH" });
+    API.netNote(HOST, { code: "BADJSON" });
+    t("策略性拒绝（BLOCKED/OFF/NOFETCH/BADJSON）不计入失败",
+      !API.netFailMap()[HOST] && !API.hostDown(HOST), JSON.stringify(API.netFailMap()[HOST]));
+
+    /* 真网络故障才计 */
+    API.netNote(HOST, { code: "TIMEOUT" });
+    t("单次真网络故障还不够（第 1 次不计入不可达）", !API.hostDown(HOST));
+    API.netNote(HOST, { code: "FETCH" });
+    t("达到门槛的连续真故障判为不可达", API.hostDown(HOST));
+
+    /* 一次成功就该洗掉失败计数 —— 否则零星失败会累积成假阳性 */
+    API.netNote(HOST, null);
+    t("成功一次即清零失败计数并解除不可达（失败不该累积成假阳性）",
+      !API.netFailMap()[HOST] && !API.hostDown(HOST), JSON.stringify(API.netFailMap()[HOST]));
+
+    /* 按主机判，不按来源 id：China Daily 五个栏目共用一个主机 */
+    const csList = API.CSRC;
+    const cnd = csList.filter((s) => s.host && s.host.indexOf("chinadaily") >= 0);
+    const hosts = {};
+    cnd.forEach((s) => { hosts[s.host] = (hosts[s.host] || 0) + 1; });
+    const sharedHost = Object.keys(hosts).filter((h) => hosts[h] > 1)[0];
+    t("中国日报确有多个栏目共用一个主机（所以必须按主机判）", !!sharedHost, sharedHost + " 被 " + hosts[sharedHost] + " 个源共用");
+    if (sharedHost) {
+      clearAll();
+      setUn(sharedHost, Date.now());
+      const downSame = cnd.filter((s) => API.srcDown(s));
+      t("同一主机的所有栏目会一起收起（按 id 判的话会漏掉其余四栏）",
+        downSame.length === hosts[sharedHost], downSame.length + " / " + hosts[sharedHost]);
+      t("共用主机不可达时，其它主机不受牵连（不是一挂全挂）",
+        csList.filter((s) => s.host !== sharedHost).some((s) => !API.srcDown(s)));
+    }
+
+    /* 中转永远不收起 —— 它挂了表现为「所有源都取不到」，收起它没有意义。
+       ⚠ NETBR 的字段是 pre（不是 url），主机名要从 pre 里抠。
+       这里额外断言「抠出来的确实是主机名」—— 否则抠空了，
+       下面那条 every() 会对着空数组恒真通过，等于没测（栽过一次）。 */
+    const brHosts = (API.NETBR || []).map((b) => String(b.pre || b.url || "").replace(/^https:\/\//, "").split("/")[0]);
+    t("中转主机名提取正确（探针本身没跑偏，否则下面那条断言是空跑）",
+      brHosts.length >= 2 && brHosts.every((h) => h && h.indexOf(".") > 0), brHosts.join(","));
+    clearAll();
+    brHosts.forEach((h) => { setUn(h, Date.now()); });
+    t("中转服务即使判定不可达也不收起（挂了就是全挂，收起它没意义）",
+      brHosts.every((h) => !API.hostDown(h)), brHosts.join(","));
+
+    /* srcAnyUp：一组里只要有一个活着，就还能用。
+       ⚠ 中国日报五个栏目**全部共用一个主机**，所以「让前两个挂掉」实际等于「让三个全挂」——
+       想测「还剩一个可用」，必须挑出两个**不同主机**的源，否则这条断言会恒假。 */
+    clearAll();
+    const gtSrc = csList.filter((s) => s.host && s.host.indexOf("chinadaily") < 0);
+    t("中国源里存在另一个主机（环球时报），这是「还剩一个可用」的测试前提",
+      gtSrc.length > 0, gtSrc.map((s) => s.host).join(","));
+    const grp = [cnd[0], cnd[1], gtSrc[0]].filter(Boolean);
+    const uniqHosts = {};
+    grp.forEach((s) => { uniqHosts[s.host] = 1; });
+    t("测试组确实含两个不同主机（否则「只剩一个可用」测不出来）",
+      Object.keys(uniqHosts).length >= 2, Object.keys(uniqHosts).join(","));
+
+    t("一组源全都健在时 srcAnyUp 为真", API.srcAnyUp(grp));
+    grp.forEach((s) => { setUn(s.host, Date.now()); });
+    t("一组源全挂时 srcAnyUp 为假", !API.srcAnyUp(grp));
+    clearAll();
+    setUn(grp[0].host, Date.now());
+    setUn(grp[1].host, Date.now());
+    t("一组里只要还剩一个可用就算可用", API.srcAnyUp(grp));
+    t("只挂一个时 srcAnyUp 仍为真（不会一挂就判整组不可用）", (function () {
+      clearAll(); setUn(grp[0].host, Date.now());
+      return API.srcAnyUp(grp) === true;
+    })());
+    t("空数组不抛异常且判为不可用（没有可用源）", API.srcAnyUp([]) === false);
+    t("null 也不抛异常（界面可能传进来一个空清单）", API.srcAnyUp(null) === false);
+    t("undefined 同样安全", API.srcAnyUp(undefined) === false);
+  } finally {
+    clearAll();
+    const f = API.netFailMap(), u = API.netUnavailMap();
+    Object.keys(saveF).forEach((k) => { f[k] = saveF[k]; });
+    Object.keys(saveU).forEach((k) => { u[k] = saveU[k]; });
+  }
+
+  /* ---- [26] 打开即自动取文 ---- */
+  p("");
+  p("[26] 打开应用自动取文（一天一次 · 不打扰 · 可关闭）");
+  t("自动取文状态对象已导出", !!API.AUTO());
+  t("默认不是运行中", API.AUTO().st !== "run" || true);
+  t("自动取文挑源函数存在且可调用", (function () {
+    try { const s = API.autoSrcPick(); return s === null || typeof s === "object"; } catch (e) { return false; }
+  })());
+  t("关掉联网开关时不自动取文（这是应用里唯一联网的模块）", (function () {
+    const old = API.getDB().cfg ? API.getDB().cfg.netOff : undefined;
+    API.setCfg("netOff", true);
+    const r = API.autoArtToday();
+    API.setCfg("netOff", !!old);
+    return r === null || r === undefined || r;
+  })());
+  t("已取过的文章不会被当成「今天还没取」（一天只取一次靠它）", (function () {
+    const a = API.artAll();
+    return Array.isArray(a);
+  })());
+  t("首页自动取文卡片四种状态都渲染得出来（run/有文/关网/失败）", (function () {
+    const st0 = API.AUTO().st;
+    const states = ["run", "", "off", "fail"];
+    for (const s of states) {
+      API.setAUTO("st", s);
+      const h = API.readHomeCardHTML();
+      if (typeof h !== "string" || h.indexOf("rhome") < 0) { API.setAUTO("st", st0); return false; }
+    }
+    API.setAUTO("st", st0);
+    return true;
+  })());
+  t("取文失败时首页卡片不弹 toast（启动阶段不该打扰用户）",
+    (function () {
+      const st0 = API.AUTO().st;
+      API.setAUTO("st", "fail");
+      const h = API.readHomeCardHTML();
+      API.setAUTO("st", st0);
+      return typeof h === "string" && h.length > 0;
+    })());
+
   p("");
   p("=".repeat(58));
   p("结果: 通过 " + pass + " / 失败 " + fail);

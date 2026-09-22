@@ -74,20 +74,25 @@ function rdNetBarHTML() {
   } else h += '<span>只发出 GET 请求，不上传任何数据</span>';
   h += "</div>";
   if (RMSG) h += '<div class="rmsg ' + RMSG.kind + '">' + esc(RMSG.text) + (RMSG.hint ? '<span>' + esc(RMSG.hint) + "</span>" : "") + "</div>";
-  /* 自测结果 */
+  /* 自测结果。这里的文案由结果本身推导，不再写死「境外源打不开是常态」——
+     那句是 2026-09 的一次性实测记录，写死在界面上会变成一句永远正确、也永远没用的话。
+     现在改成按网管标记说话：哪个被认定不可达就点名哪个，其余正常显示。 */
   var r = NETST.results, ks = [];
   for (var k in r) if (Object.prototype.hasOwnProperty.call(r, k)) ks.push(k);
   if (ks.length) {
-    h += '<div class="rtest"><div class="secttl">源可达性</div>';
+    h += '<div class="rtest"><div class="secttl">源可达性' +
+      (NETST.testing ? ' <span class="muted" style="font-weight:400">测试中…</span>' : "") + "</div>";
     for (var i = 0; i < ks.length; i++) {
       var x = r[ks[i]];
+      var dn = hostDown(ks[i]);
       h += '<div class="rtline"><span class="rtok ' + (x.ok ? "y" : "n") + '">' + (x.ok ? "✓" : "✗") + "</span>" +
-        "<b>" + esc(ks[i]) + "</b><span>" + esc(x.msg) + (x.ms ? " · " + x.ms + "ms" : "") + "</span></div>";
+        "<b>" + esc(ks[i]) + "</b><span>" + esc(x.msg) + (x.ms ? " · " + x.ms + "ms" : "") +
+        (dn && !x.ok ? ' · <b style="color:var(--bad)">已标记不可达，相关来源已收起</b>' : "") + "</span></div>";
     }
     h += '<p class="muted" style="font-size:12px;margin:6px 0 0">' +
-      "境外那几行（维基、卫报）打不开是常态 —— 当前网络到不了它们，不是应用的问题。" +
-      "取文用下面「中国英文媒体」那一组，它们在国内网络下实测连得上。" +
-      "另外「我的文章 → 粘贴导入」完全离线、不挑来源，任何网站的文章都能贴进来精读。</p>";
+      esc("打不开的源不是「被删掉了」，是暂时收起来 —— 它的代码还在。") +
+      "换个网络（例如切到手机热点）再点一次自测，能通的话它自己就回来了。" +
+      "完全离线的退路始终在：<b>我的文章 → 粘贴导入</b>，任何来源的文章都能贴进来精读。</p>";
     h += "</div>";
   }
   return h;
@@ -97,16 +102,26 @@ function rdNetBarHTML() {
 function rdCNHTML() {
   var s = csOf(CSEL) || CSRC[0];
   var off = cfg().netOff || NETST.on === false;
+  /* 只列出当前网络下能用的栏目。被判定不可达的收起来，但明确说出「收起了几个」——
+     悄悄少几个按钮，用户会以为是应用坏了或者自己记错了。 */
+  var ups = [], downs = [];
+  for (var q = 0; q < CSRC.length; q++) (srcDown(CSRC[q]) ? downs : ups).push(CSRC[q]);
+  if (!ups.length) ups = CSRC;                      /* 兜底：全不可用时不要交出一个空壳 */
+  if (srcDown(s)) s = ups[0];
   var h = '<div class="secttl cnsec">中国英文媒体 <span class="cntag">大陆可达</span></div>';
   h += '<p class="muted" style="font-size:12px;margin:2px 0 8px">' +
-    "这一组是在中国大陆网络下实测<b>连得上</b>的英文媒体 —— 上面那批境外源多半打不开，" +
-    "那是网络到不了它们，不是应用坏了。取回来的文章会存进本地库，之后断网也能反复精读。</p>";
+    "这一组是实测在<b>中国大陆网络下连得上</b>的英文媒体。取回来的文章会存进本地库，之后断网也能反复精读。</p>";
   h += '<div class="cchips">';
-  for (var i = 0; i < CSRC.length; i++) {
-    h += '<button type="button" class="cchip' + (CSEL === CSRC[i].id ? " on" : "") +
-      '" data-csr="' + CSRC[i].id + '">' + esc(CSRC[i].short) + "</button>";
+  for (var i = 0; i < ups.length; i++) {
+    h += '<button type="button" class="cchip' + (CSEL === ups[i].id ? " on" : "") +
+      '" data-csr="' + ups[i].id + '">' + esc(ups[i].short) + "</button>";
   }
   h += "</div>";
+  if (downs.length) {
+    h += '<p class="muted" style="font-size:12px;margin:6px 0 0;color:var(--warn)">' +
+      esc("已收起 " + downs.length + " 个当前连不上的栏目（" + downs.map(function (x) { return x.short; }).join("、") +
+        "）。它们的代码还在，网络恢复后会自动重新出现；也可以点上面的「源可达性自测」立刻重判。") + "</p>";
+  }
   h += '<p class="muted" style="font-size:12px;margin:7px 0 8px">' + esc(s.tag) + " · 许可 " + esc(s.lic) +
     (s.rec ? ' · <b class="rec">推荐</b>' : "") + "<br>" + esc(s.note) + "</p>";
   h += '<div class="rrow"><button class="btn sm" id="rdCNLoad"' + (off || CBUSY ? " disabled" : "") + ">" +
@@ -125,48 +140,75 @@ function rdCNHTML() {
   } else if (CLIST) h += '<p class="empty sm">这个栏目这次没取到文章，换个栏目试试</p>';
   return h;
 }
+/* 一个源被收起时的统一交代。
+   为什么要专门写一条「不可用说明」而不是直接把那块删掉：
+   用户昨天还能点、今天按钮没了，第一反应是「应用坏了」或者「我记错了」。
+   说清楚三件事就能消掉这个疑惑 —— 是哪一块没了、为什么、怎么让它回来。 */
+function rdDownNote(name, what) {
+  return '<div class="rmsg info">' +
+    esc("已收起「" + what + "」—— " + name + " 在当前网络下连不上。") +
+    '<span>' + esc("功能没有删除：换一个网络（手机热点 / 换个运营商）后点上面的「源可达性自测」，通了它就自动回来。") +
+    "现在要读文章的话，用下面的「中国英文媒体」，或者走「我的文章 → 粘贴导入」（完全离线、不挑来源）。</span></div>";
+}
 function rdDiscoverHTML() {
   var h = "";
   var disabled = cfg().netOff || NETST.on === false;
-  /* ---- 每日内容 ---- */
-  h += '<div class="secttl">今日可读</div>';
-  h += '<div class="rrow"><button class="btn sm" id="rdPull"' + (disabled || RBUSY === "feed" ? " disabled" : "") + ">" +
-    (RBUSY === "feed" ? "取文中…" : "拉取今天的推荐") + "</button>" +
-    '<span class="muted" style="font-size:12px">维基每日精选：今日特色条目 + 时事 + 历史上的今天</span></div>';
-  if (RFEED && RFEED.length) {
-    h += '<div class="rlist">';
-    for (var i = 0; i < RFEED.length; i++) {
-      var it = RFEED[i];
-      h += '<div class="ritem"><div class="rtop"><span class="rbadge">' + esc(it.badge || "") + "</span>" +
-        '<span class="rsrc">' + esc(it.src) + "</span></div>" +
-        "<b>" + esc(it.title) + "</b>" +
-        '<p class="rmuted">' + esc(String(it.text || "").slice(0, 150)) + "…</p>" +
-        (it.host ? '<button class="btn ghost sm" data-grab="' + esc(it.host) + "|" + esc(it.title) + '">取全文精读 ›</button>' : "") +
-        (!it.host && it.text ? '<button class="btn ghost sm" data-mkfeed="' + i + '">用这段精读 ›</button>' : "") +
-        "</div>";
-    }
-    h += "</div>";
-  } else if (RFEED) h += '<p class="empty sm">今天的推荐是空的</p>';
+  /* 「今日可读」和「当日新闻稿」两块都挂在维基上。维基一旦被判定不可达，
+     这两块的按钮点了就是白等 —— 与其让人等 12 秒超时，不如直接标明并用一条
+     可用的替代路径替换它。注意【不删功能】：判定是可过期的，网络一变它们就回来。 */
+  var wikiDown = hostDown("en.wikipedia.org");
+  if (!wikiDown) {
+    /* ---- 每日内容 ---- */
+    h += '<div class="secttl">今日可读</div>';
+    h += '<div class="rrow"><button class="btn sm" id="rdPull"' + (disabled || RBUSY === "feed" ? " disabled" : "") + ">" +
+      (RBUSY === "feed" ? "取文中…" : "拉取今天的推荐") + "</button>" +
+      '<span class="muted" style="font-size:12px">维基每日精选：今日特色条目 + 时事 + 历史上的今天</span></div>';
+    if (RFEED && RFEED.length) {
+      h += '<div class="rlist">';
+      for (var i = 0; i < RFEED.length; i++) {
+        var it = RFEED[i];
+        h += '<div class="ritem"><div class="rtop"><span class="rbadge">' + esc(it.badge || "") + "</span>" +
+          '<span class="rsrc">' + esc(it.src) + "</span></div>" +
+          "<b>" + esc(it.title) + "</b>" +
+          '<p class="rmuted">' + esc(String(it.text || "").slice(0, 150)) + "…</p>" +
+          (it.host ? '<button class="btn ghost sm" data-grab="' + esc(it.host) + "|" + esc(it.title) + '">取全文精读 ›</button>' : "") +
+          (!it.host && it.text ? '<button class="btn ghost sm" data-mkfeed="' + i + '">用这段精读 ›</button>' : "") +
+          "</div>";
+      }
+      h += "</div>";
+    } else if (RFEED) h += '<p class="empty sm">今天的推荐是空的</p>';
+  } else {
+    h += '<div class="secttl">今日可读</div>';
+    h += rdDownNote("维基百科", "每日精选（特色条目 / 时事 / 历史上的今天）与当日的维基新闻稿");
+  }
   /* ---- 中国英文媒体（大陆可达） ---- */
   h += rdCNHTML();
   /* ---- 主题检索 ---- */
   h += '<div class="secttl">按主题找文章</div>';
+  /* 下拉框里只放当前网络下能用的源。原来一次性列 6 个、其中 5 个是维基家族，
+     点下去全是超时 —— 那等于把「选择」做成了「依次踩雷」。
+     注意这里【不是把源删掉】：被收起的源在自测通过后会重新出现在这个列表里。 */
+  var upS = [], downS = [];
+  for (i = 0; i < SRCS.length; i++) (srcDown(SRCS[i]) ? downS : upS).push(SRCS[i]);
+  if (!upS.length) upS = SRCS;                       /* 兜底：全不可用时不交出空下拉框 */
+  if (srcDown(srcOf(RSRC))) RSRC = upS[0].id;
   h += '<div class="rrow"><select id="rdSrc" class="rsel">';
-  for (i = 0; i < SRCS.length; i++) {
-    h += '<option value="' + SRCS[i].id + '"' + (RSRC === SRCS[i].id ? " selected" : "") + ">" + esc(SRCS[i].name) + "</option>";
+  for (i = 0; i < upS.length; i++) {
+    h += '<option value="' + upS[i].id + '"' + (RSRC === upS[i].id ? " selected" : "") + ">" + esc(upS[i].name) + "</option>";
   }
   h += "</select>" +
     '<input id="rdQ" class="rin" type="text" placeholder="比如 climate change / ancient Rome" value="' + esc(RQ) + '">' +
     '<button class="btn sm" id="rdSearch"' + (disabled || RBUSY === "search" ? " disabled" : "") + ">" + (RBUSY === "search" ? "搜索中…" : "搜索") + "</button></div>";
+  if (downS.length) {
+    h += '<p class="muted" style="font-size:12px;margin:6px 0 0;color:var(--warn)">' +
+      esc("已收起 " + downS.length + " 个当前连不上的源（" + downS.map(function (x) { return x.name; }).join("、") +
+        "）。代码都还在，网络恢复后会自动回到这个列表；也可以点上面的「源可达性自测」立刻重判。") + "</p>";
+  }
   var s = srcOf(RSRC);
   if (s) {
     h += '<p class="muted" style="font-size:12px;margin:2px 0 0">' + esc(s.tag) + " · 许可 " + esc(s.lic);
     if (s.rec) h += ' · <b class="rec">推荐</b>';
     h += "<br>" + esc(s.note) + "</p>";
-    /* 这一批源都是境外站点，实测国内网络下基本直接超时。提前讲清楚，
-       免得用户点了「搜索」在那儿等半天，还以为应用卡死了。 */
-    h += '<p class="muted" style="font-size:12px;margin:4px 0 0;color:var(--warn)">' +
-      "这一批源都在境外，国内网络下多半连不上 —— 取文建议用上面的「中国英文媒体」。</p>";
     if (s.id === "guardian" && !cfg().guardianKey) h += '<p class="rmsg bad" style="margin-top:6px">还没填卫报 API Key —— 到「设置 → 精读」里填一个（免费申请）</p>';
   }
   if (RRES && RRES.length) {
@@ -191,16 +233,20 @@ function rdDiscoverHTML() {
     }
   } else if (RRES) h += '<p class="empty sm">没有搜到结果，换个关键词试试</p>';
   /* ---- 当日新闻稿 ---- */
-  h += '<div class="secttl">当日新闻稿</div>';
-  h += '<div class="rrow"><button class="btn ghost sm" id="rdNews"' + (disabled || RBUSY === "news" ? " disabled" : "") + ">" +
-    (RBUSY === "news" ? "取稿中…" : "看看今天发了什么") + '</button><span class="muted" style="font-size:12px">维基新闻 · 每日更新</span></div>';
-  if (RNEWS && RNEWS.length) {
-    h += '<div class="rlist">';
-    for (i = 0; i < RNEWS.length; i++) {
-      h += '<div class="ritem"><b>' + esc(RNEWS[i].title) + "</b>" +
-        '<button class="btn ghost sm" data-grab="en.wikinews.org|' + esc(RNEWS[i].title) + '">取全文精读 ›</button></div>';
+  if (hostDown("en.wikinews.org")) {
+    h += '<div class="secttl">当日新闻稿</div>' + rdDownNote("维基新闻", "当日新闻稿列表");
+  } else {
+    h += '<div class="secttl">当日新闻稿</div>';
+    h += '<div class="rrow"><button class="btn ghost sm" id="rdNews"' + (disabled || RBUSY === "news" ? " disabled" : "") + ">" +
+      (RBUSY === "news" ? "取稿中…" : "看看今天发了什么") + '</button><span class="muted" style="font-size:12px">维基新闻 · 每日更新</span></div>';
+    if (RNEWS && RNEWS.length) {
+      h += '<div class="rlist">';
+      for (i = 0; i < RNEWS.length; i++) {
+        h += '<div class="ritem"><b>' + esc(RNEWS[i].title) + "</b>" +
+          '<button class="btn ghost sm" data-grab="en.wikinews.org|' + esc(RNEWS[i].title) + '">取全文精读 ›</button></div>';
+      }
+      h += "</div>";
     }
-    h += "</div>";
   }
   /* ---- 自定义 URL ---- */
   h += '<div class="secttl">从指定地址取文</div>';
@@ -310,7 +356,17 @@ function readMount() {
   });
 }
 function rdSelfTest() {
-  netSelfTest(function () { render(); toast("自测完成", "ok"); });
+  if (NETST.testing) return;
+  /* 先把上一次的结果清掉再开跑：不清的话界面上会同时出现新旧两轮的数字，
+     用户没法判断哪一行是刚才测的。NETST.results 由 netSelfTest 自己重置，
+     这里只需要给出「正在测」的状态。 */
+  NETST.results = {};
+  netSelfTest(function () {
+    render();
+    var r = NETST.results, dn = 0, up = 0;
+    for (var k in r) if (Object.prototype.hasOwnProperty.call(r, k)) { if (r[k].ok) up++; else dn++; }
+    toast("自测完成：" + up + " 个可达 · " + dn + " 个不可达" + (dn ? "（已收起的来源见列表）" : ""), dn ? "info" : "ok");
+  });
   render();
 }
 function rdPullFeed() {
@@ -557,12 +613,15 @@ function rdProfBar(prof) {
   return h;
 }
 /* 正文渲染：每个英文词包成可点的 span。
-   「哪个词是生词」提前算好放画像里，不在渲染时现查 —— 一篇近千词，现查会明显卡。 */
+   「哪个词是生词」提前算好放画像里，不在渲染时现查 —— 一篇近千词，现查会明显卡。
+   外层 .rbody 是行宽容器（max-width:62ch），排版规则见 CSS 里那一段注释。 */
 function rdBodyInner(a, prof) {
   var assist = clamp(cfg().readAssist || 0, 0, 3);
-  var h = "";
+  var h = '<div class="rbody">';
   for (var i = 0; i < a.ps.length; i++) {
-    h += '<div class="rpara"><span class="rpnum">' + (i + 1) + "</span>";
+    /* 逐句档需要一个额外的类：那个档位下段号要重新出现（窄屏也是），
+       而且段首不能再缩进 —— 一句一行时缩进会把第一句挤成视觉上的第二层。 */
+    h += '<div class="rpara' + (assist >= 3 ? " rsent-mode" : "") + '"><span class="rpnum">' + (i + 1) + "</span>";
     if (assist >= 3) {
       var ss = splitSents(a.ps[i]);
       for (var j = 0; j < ss.length; j++) h += '<p class="rsent">' + rdInline(ss[j], prof, assist) + "</p>";
@@ -571,7 +630,7 @@ function rdBodyInner(a, prof) {
     }
     h += "</div>";
   }
-  return h;
+  return h + "</div>";
 }
 function rdInline(text, prof, assist) {
   var out = "", last = 0, m;

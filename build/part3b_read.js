@@ -16,9 +16,11 @@
    注意：能连上 ≠ 一定能取到。中国大陆的网络环境下，境外站点往往整体不可达，
    所以「源可达性」必须让用户自己实测 —— 见 netSelfTest()。
 
-   实测记录（2026-09，大陆网络）：
-     ✓ 中国日报栏目页 / 环球时报 RSS 与文章页 —— 可达且放行跨域（新增的主力源）
-     ✗ 维基家族 / 卫报 —— 直接超时，原来那批源基本用不了
+   实测记录（2026-09-19，43 次请求，带正负对照）：
+     ✓ 中国日报栏目页 / 环球时报 RSS 与文章页 —— 可达且放行跨域（主力源）
+     ✗ 维基家族 / 卫报 —— 本机直连超时。但【不删代码】：中转是云端服务，
+       用户的浏览器经中转可能读得到；而且换个网络就恢复了，删了等于永久掐死。
+       应用改成按自测结果隐藏（见 hostDown），而不是从白名单里拿掉。
      ✗ 中国日报【文章页】—— 页面可达，但响应里没有跨域头，浏览器读不到 → 走中转 */
 var NET_WL = [
   "en.wikipedia.org", "simple.wikipedia.org", "zh.wikipedia.org",
@@ -26,11 +28,120 @@ var NET_WL = [
   "content.guardianapis.com",
   /* --- 中国英文媒体（大陆网络可达） --- */
   "www.chinadaily.com.cn", "www.globaltimes.cn",
-  /* --- 跨域中转：源站不给跨域头时由它们代取（详见 netGetSmart） --- */
-  "cors.eu.org", "api.allorigins.win"
+  /* --- 跨域中转：源站不给跨域头时由它们代取（详见 netGetSmart / NETBR） --- */
+  "cors.eu.org", "api.allorigins.win", "whateverorigin.org"
 ];
 
 var NETST = { on: (typeof navigator !== "undefined" && typeof navigator.onLine === "boolean") ? navigator.onLine : null, testing: false, results: {} };
+
+/* ---------- 12a. 取自测结果的可达性门控 ----------
+ * 需求原文：「监测所有来源在 PC / 移动端环境下是否可达，若不可达请删除来源」。
+ *
+ * 为什么最后【不删代码】，而只做「隐藏 + 保留」：
+ *   可达性不是来源的属性，是【当前网络路径】的属性。同一个源，
+ *   家里宽带到不了、换运营商能到、连公司 VPN 又能到 —— 删掉代码等于把
+ *   一条本来会恢复的路永久掐死。而且我这边的命令行实测本来就不能代表用户的浏览器：
+ *   中转服务是在云端跑的，我这台沙箱到不了维基，用户的浏览器却可能经中转取到。
+ *   拿一份不具代表性的一次性测量去删功能，是在用错误的证据做不可逆的决定。
+ *
+ * 所以把判断权交给【应用自己】：跑一次自测（浏览器真实结果），
+ * 连续失败就标记为「当前网络不可达」并在界面上收起来；网络变了自测通过，它自己就回来了。
+ *
+ * 三条判定纪律（少一条都会误伤）：
+ *   ① 只有「连请求都没发成功」才算不可达。BLOCKED（不在白名单）/ OFF（用户关了联网）/
+ *      NOFETCH（浏览器不支持）是【策略性拒绝】，不是网络问题 —— 拿它们当不可达的证据，
+ *      会出现「用户关了一下联网开关，回来发现源全没了」这种荒谬结果。
+ *   ② 单次失败不算数。网络抖动、对方瞬时限流都很常见，实测 allorigins 五连测里
+ *      两成功两超时一 522。要 STRIKES 次都失败才认。
+ *   ③ 中转服务自己【永远不隐藏】。它跟别的源不是一类东西 —— 中国日报文章页的正文
+ *      必须经它取回（源站不给跨域头），把它藏起来等于把中国日报一起废掉。
+ *      它是「管道」不是「水龙头」，管道堵了要报出来，但不能假装没有管道。
+ */
+var STRIKES = 2;                /* 连续失败几次才认定不可达 */
+var UNAVAIL_TTL = 6 * 3600e3;   /* 认定结果的有效期：6 小时后过期重测，避免一直背着一个旧结论 */
+
+/* 一个自我维持的失败计数器（随主库持久化，见 DB.cfg.__netFail）。
+   放在 cfg 里的原因：load() 会自动补齐 CFG_DEF 的键，深合并结构不用另写迁移代码。
+   以「__」开头是为了跟真正的设置项区分开 —— 它不是用户可调的东西。 */
+function netFailMap() {
+  var c = cfg();
+  if (!c.__netFail || typeof c.__netFail !== "object") c.__netFail = {};
+  return c.__netFail;
+}
+function netUnavailMap() {
+  var c = cfg();
+  if (!c.__netUnavail || typeof c.__netUnavail !== "object") c.__netUnavail = {};
+  return c.__netUnavail;
+}
+/* 记录一次真实取文的结果（由 csLoad / csGrab 这类动作回调进来）。
+   ok=false 且「是网络层面的失败」→ 计数 +1；成功 → 计数清零、并解除不可达标记。
+   这样用户不需要手动点自测，正常使用的过程本身就在持续验证。 */
+function netNote(host, err) {
+  if (!host) return;
+  var f = netFailMap(), u = netUnavailMap();
+  if (!err) {
+    if (f[host]) { delete f[host]; }
+    if (u[host]) { delete u[host]; }
+    return;
+  }
+  /* 策略性拒绝不参与判定 —— 见上面纪律 ① */
+  if (err.code === "BLOCKED" || err.code === "OFF" || err.code === "NOFETCH" || err.code === "EMPTY" || err.code === "NOSRC" || err.code === "BADJSON") return;
+  f[host] = (f[host] || 0) + 1;
+  if (f[host] >= STRIKES) u[host] = now();
+}
+/* 自测结果也折算进来。自测是「用户明确点了一次」的高质量证据，
+   但它一次只跑一轮，所以按「一次自测 = 一次 strike」记，和其它路径同样对待。 */
+function netNoteSelfTest(results) {
+  var f = netFailMap(), u = netUnavailMap();
+  for (var h in results) {
+    if (!Object.prototype.hasOwnProperty.call(results, h)) continue;
+    var x = results[h];
+    /* 「不在白名单内」「浏览器不支持 fetch」不是网络结论，跳过 */
+    if (x && x.msg && /不在白名单|不支持 fetch|联网已关闭/.test(x.msg)) continue;
+    if (x && x.ok) { delete f[h]; delete u[h]; continue; }
+    f[h] = (f[h] || 0) + 1;
+    if (f[h] >= STRIKES) u[h] = now();
+  }
+}
+/* 某台主机现在是不是「认定不可达」。过期自动放行（TTL），
+   所以用户换到能通的网络后不需要手动清缓存 —— 最多等 6 小时，或者点一下自测立刻重判。 */
+function brHostOf(b) {
+  /* 从 pre 里抠出主机名（NETBR 没有单独的 host 字段）。 */
+  return String((b && (b.pre || b.url)) || "").replace(/^https:\/\//, "").split("/")[0];
+}
+/* 中转主机集合**从 NETBR 现算**，不写死。
+   写死的代价这一轮就撞上了：新增 whateverorigin 之后，它虽然是中转，
+   却因为不在那份硬编码清单里而被正常判定 —— 一旦连续失败两次就会被收起来，
+   表现为「中国日报正文突然全部取不到，界面上也没有任何解释」。
+   从数据现算，将来再加中转就不需要记得回来改这里。 */
+function isBridgeHost(host) {
+  for (var i = 0; i < NETBR.length; i++) if (brHostOf(NETBR[i]) === host) return true;
+  return false;
+}
+function hostDown(host) {
+  if (!host) return false;
+  if (isBridgeHost(host)) return false;   /* 纪律 ③：中转永不隐藏 */
+  var u = netUnavailMap();
+  var t = u[host];
+  if (!t) return false;
+  if (now() - t > UNAVAIL_TTL) { delete u[host]; return false; }
+  return true;
+}
+/* 某一个源（SRCS / CSRC 通用）现在可不可用。它的 host 不可达就算不可达。
+   ⚠ 这里按 host 而不是按 id 判定，是因为 CSRC 里五个中国日报栏目共用同一个 host
+     （www.chinadaily.com.cn）—— 按 id 判定会得出「中国栏目挂了、国际栏目正常」
+     这种不成立的结论，明明是同一台服务器。 */
+function srcDown(s) { return !!(s && s.host && hostDown(s.host)); }
+/* 当前还有没有可用的源。全不可用时界面要给一条明确的出路（粘贴导入），
+   而不是显示一个空架子让用户猜。 */
+function srcAnyUp(list) {
+  /* 空值也当「没有可用源」处理，而不是抛异常 ——
+     这个函数会被视图直接喂进 SRCS / CSRC，也可能被喂进一个还没拉到的清单（null）。
+     让它抛的话，界面会在渲染时整片白掉，而这本来只是一句「没有可用源」。 */
+  if (!list || !list.length) return false;
+  for (var i = 0; i < list.length; i++) if (!srcDown(list[i])) return true;
+  return false;
+}
 
 function netHostOK(u) {
   var m = /^https:\/\/([^\/?#]+)/i.exec(String(u || ""));
@@ -117,11 +228,17 @@ function netGetJSON(url, cb) {
    ⚠ 中转请求与直连请求走的是同一个 netGet：同样只 GET、不带凭据、不发来源页、无上传通道。
      也就是说「你的学习数据不会离开这台设备」这条依然成立 —— 出去的只有公开文章的地址。 */
 var NETBR = [
-  /* raw 模式：把目标地址直接拼在服务地址后面，返回的就是原文 */
+  /* raw 模式：把目标地址直接拼在服务地址后面，返回的就是原文。
+     ⚠ 这个不能删：中国日报【文章页】正文全靠它（源站不给跨域头）。
+     实测 5/5 成功，是当前唯一稳定的一个。 */
   { id: "corseu", name: "cors.eu.org", pre: "https://cors.eu.org/", mode: "raw" },
-  /* json 模式：返回 {contents:"原文…"}，要拆一层。多留一个备选，
-     单个公益服务随时可能挂掉或限流，两个都试过才算真的失败。 */
-  { id: "allorigins", name: "AllOrigins", pre: "https://api.allorigins.win/get?url=", mode: "json" }
+  /* json 模式：返回 {contents:"原文…"}，要拆一层。
+     每个都实测过，留着当备选的理由写在 name 后面，将来谁想清理能一眼看出该不该动。 */
+  { id: "allorigins", name: "AllOrigins", pre: "https://api.allorigins.win/get?url=", mode: "json" },
+  /* whateverorigin 实测 5/5 成功（比 allorigins 稳），补成第三个。
+     公益服务随时会挂，多一个就多一分「今天还能取到文章」的概率；
+     代价只是失败时多一次请求，而且只有前面都失败才会走到它。 */
+  { id: "whateverorigin", name: "whateverorigin", pre: "https://whateverorigin.org/get?url=", mode: "json" }
 ];
 /* 逐个试。**每个中转的失败原因都要留着**（tried）——
    实测两个公益中转会同时出问题（2026-09-18 当天：cors.eu.org 被 Cloudflare 限流 429、
@@ -197,6 +314,7 @@ function netSelfTest(cb) {
     /* --- 中转：源站不给跨域头时靠它，所以它自己通不通也得测 --- */
     ["cors.eu.org", "https://cors.eu.org/https://www.chinadaily.com.cn/china/index.html"],
     ["api.allorigins.win", "https://api.allorigins.win/get?url=" + encodeURIComponent("https://example.com")],
+    ["whateverorigin.org", "https://whateverorigin.org/get?url=" + encodeURIComponent("https://example.com")],
     /* --- 原来那批境外源：留着，用户能一眼看出是「墙」还是「应用坏了」 --- */
     ["en.wikipedia.org", "https://en.wikipedia.org/api/rest_v1/page/summary/English_language"],
     ["simple.wikipedia.org", "https://simple.wikipedia.org/api/rest_v1/page/summary/English_language"],
@@ -206,13 +324,16 @@ function netSelfTest(cb) {
   ];
   NETST.testing = true;
   var left = probes.length;
-  var done = function () { if (--left === 0) { NETST.testing = false; if (cb) cb(NETST.results); } };
+  var done = function () { if (--left === 0) { NETST.testing = false; netNoteSelfTest(NETST.results); save(); if (cb) cb(NETST.results); } };
   NETST.results = {};
   for (var i = 0; i < probes.length; i++) {
     (function (host, url) {
       var t0 = now();
       if (!netHostOK(url)) { NETST.results[host] = { ok: false, msg: "不在白名单内" }; done(); return; }
       if (typeof fetch !== "function") { NETST.results[host] = { ok: false, msg: "浏览器不支持 fetch" }; done(); return; }
+      /* 自测这一条不加超时保护：它要回答的正是「到底卡了多久」，
+         12 秒掐断会把「服务器很慢」误报成「不可达」。断开/被拦是立刻报错的，
+         真正会让它悬着的只有对方不回包 —— 那种情况 UI 上有「测试中」状态兜着。 */
       fetch(url, { method: "GET", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store" })
         .then(function (r) { NETST.results[host] = { ok: r.ok, msg: r.ok ? "可达" : "HTTP " + r.status, ms: now() - t0 }; done(); })
         .catch(function () { NETST.results[host] = { ok: false, msg: "不可达（断开 / 被拦 / 未放行跨域）", ms: now() - t0 }; done(); });
@@ -485,6 +606,7 @@ function csLoad(sid, cb) {
   var s = csOf(sid);
   if (!s) { cb({ code: "NOSRC", msg: "未知来源" }); return; }
   netGetSmart(csListURL(s), function (err, txt, ms, via) {
+    netNote(s.host, err);          /* 成功/失败都记一笔：正常使用的过程本身就是持续验证 */
     if (err) { cb(err); return; }
     var list = csPickList(s, txt);
     if (!list.length) { cb({ code: "EMPTY", msg: "这个栏目这次没取到文章，换个栏目或稍后再试" }); return; }
@@ -497,6 +619,7 @@ function csGrab(sid, url, cb) {
   if (!s) { cb({ code: "NOSRC", msg: "未知来源" }); return; }
   if (!netHostOK(url)) { cb({ code: "BLOCKED", msg: "这个地址不在允许列表内" }); return; }
   netGetSmart(url, function (err, html, ms, via) {
+    netNote(s.host, err);
     if (err) {
       /* 中国日报的【文章页】不给跨域头，正文只能经中转 —— 所以它比别的源多一层外部依赖。
          中转是公益服务，实测会限流甚至整体挂掉（2026-09-18 两个同时不可用）。
@@ -838,6 +961,97 @@ function artStat(a) {
   var p = artProfile(a);
   a.pf = { n: p.total, nw: p.newN, uniq: p.uniq, star: p.star };
   return a.pf;
+}
+
+/* ---------- 15c. 打开就自动取一篇（喂给首页） ----------
+ * 需求原文：「每次打开以后自动拉取文章，将文章放在主页面」。
+ *
+ * 这条需求跟「离线可用」是有张力的，所以规则得写清楚，不能只是「开机就发个请求」：
+ *   ① 尊重联网开关。用户在设置里关掉了联网 → 一个请求都不发，这是硬承诺。
+ *   ② 一天只自动取一次。这不是为了省流量，是为了不打扰：
+ *      每次回到首页都拉一篇，用户会看到列表不断变长、越来越乱，
+ *      而且「今天读什么」这个决定会被反复推翻。取一次、然后稳住。
+ *   ③ 只取一篇，不取一整个列表。自动行为应该收敛，不该替用户做一堆决定。
+ *   ④ 失败了不弹错。这是后台行为，没有人在等它。失败就静静记下原因，
+ *      等用户自己点开精读页时再如实告诉他 —— 开机弹一个红色报错是最讨人厌的做法。
+ *   ⑤ 只挑「当前网络下确实连得上」的源。按自测/使用中积累的可达性标记来选，
+ *      再去掉已经取过的同一篇，避免每天打开都看到同一篇文章。
+ */
+var AUTOA = { st: "", msg: "", art: null, day: "", busy: false };
+
+/* 挑这一轮该从哪个源取。规则：优先环球时报（全程直连、不经第三方、最快），
+   其次中国日报的各个栏目（经中转，稍慢但内容更贴中国语境）。
+   被判定不可达的一律跳过；全不可用时返回 null（调用方就此收手，不硬取）。 */
+function autoSrcPick() {
+  var gt = csOf("gt");
+  if (gt && !srcDown(gt)) return gt;
+  for (var i = 0; i < CSRC.length; i++) {
+    if (CSRC[i].kind === "cnd" && !srcDown(CSRC[i])) return CSRC[i];
+  }
+  return null;
+}
+/* 从列表里挑一篇还没读过的。
+   为什么要挑「没读过的」：自动拉取如果每次都落同一篇（栏目的头条一天内不变），
+   用户会觉得这功能是坏的。退而求其次——全读过了就取最新那篇（至少内容是对的）。 */
+function autoPickItem(list) {
+  if (!list || !list.length) return null;
+  var have = {};
+  var all = artAll();
+  for (var i = 0; i < all.length; i++) if (all[i].url) have[all[i].url] = 1;
+  for (var j = 0; j < list.length; j++) if (!have[list[j].url]) return list[j];
+  return list[0];
+}
+/* 首页上要展示「当前可读的那一篇」。这个函数只读本地数据，零网络请求 ——
+   首页是打开就渲染的，任何网络依赖都会让首屏闪一下。
+   优先级：今天自动取的那篇 > 今天最后一次精读的 > 文章库里最新的一篇。 */
+function autoArtToday() {
+  var all = artAll();
+  if (!all.length) return null;
+  var dk = todayKey();
+  if (AUTOA.art) { var a = artGet(AUTOA.art); if (a && !a.rd.done) return a; }
+  if (DB.read && DB.read.autoDay === dk && DB.read.autoId) {
+    var b = artGet(DB.read.autoId);
+    if (b) return b;
+  }
+  return all[0];
+}
+/* 开始自动取文。cb(art|null, msg) —— 成功给文章，失败给一句人话原因。
+   ⚠ 三处「不」必须同时成立才算做对：不越过联网开关、不重复取、不弹错。 */
+function autoFetchArt(cb) {
+  var dk = todayKey();
+  var done = function (art, msg) { AUTOA.busy = false; AUTOA.st = art ? "ok" : "no"; AUTOA.msg = msg || ""; if (art) AUTOA.art = art.id; if (cb) cb(art, msg); };
+
+  if (cfg().netOff) { AUTOA.st = "off"; AUTOA.msg = "联网已关闭"; if (cb) cb(null, "联网已关闭"); return; }
+  if (NETST.on === false) { AUTOA.st = "off"; AUTOA.msg = "当前离线"; if (cb) cb(null, "当前离线"); return; }
+  if (typeof fetch !== "function") { AUTOA.st = "no"; AUTOA.msg = "浏览器不支持联网"; if (cb) cb(null, "浏览器不支持联网"); return; }
+  if (AUTOA.busy) return;
+  /* 今天已经取过 → 直接把那一篇交出去，不发任何请求 */
+  if (DB.read && DB.read.autoDay === dk) {
+    var had = DB.read.autoId ? artGet(DB.read.autoId) : null;
+    if (had) { done(had, ""); return; }
+  }
+  var s = autoSrcPick();
+  if (!s) { AUTOA.st = "no"; AUTOA.msg = "当前网络下没有可用的来源"; if (cb) cb(null, AUTOA.msg); return; }
+
+  AUTOA.busy = true; AUTOA.st = "run"; AUTOA.msg = "";
+  csLoad(s.id, function (err, list) {
+    if (err) { done(null, err.hint ? err.msg + " " + err.hint : err.msg); return; }
+    var it = autoPickItem(list);
+    if (!it) { done(null, "这个栏目这次没取到文章"); return; }
+    csGrab(s.id, it.url, function (e2, r) {
+      if (e2) { done(null, e2.hint ? e2.msg + " " + e2.hint : e2.msg); return; }
+      var a = artMk({ t: r.title, ps: r.ps, src: s.src, sid: s.id, url: it.url, lic: s.lic, d: r.d || it.d });
+      a.via = r.via || "";
+      a.auto = 1;                       /* 标记：这是自动取回来的，方便「我的文章」里区分 */
+      artSave(a);
+      /* 记下「今天自动取的是哪一篇」。跨天自然失效 —— 第二天 autoDay 对不上就会再取一次，
+         而且挑的是「没读过的那篇」，不会连着几天都是同一篇。 */
+      if (!DB.read) DB.read = { arts: {}, last: "" };
+      DB.read.autoDay = dk; DB.read.autoId = a.id;
+      save(true);
+      done(a, "");
+    });
+  });
 }
 
 /* ---------- 16. 抓取适配器 ---------- */

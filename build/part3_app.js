@@ -177,6 +177,26 @@ var CFG_DEF = {
      不满足时 pickMode 会自动顺延到下一个能用的题型，
      所以「全开」不等于「让用户对着做不了的题」。 */
   activeModes: ["recog", "recall", "listen", "cloze", "spell", "card"],
+  /* ---- 背词模式（统一入口）----
+     用户的反馈原话：「现在这种背词模式实在太混乱了」。
+     混乱的根源不是选项太少，是【方向】这个维度从来没有被表达出来 ——
+     六个题型名（看词选义 / 看义选词 / 听音辨词 / 例句填空 / 拼写 / 卡片速记）
+     其实混着两件不同的事：**先看到哪一面**（词 or 释义）和**要你做什么**（选 / 听 / 拼）。
+     拆开之后，用户只需要回答两个问题就够定位自己的偏好，不用在六个名词之间猜。
+
+     dir   先给哪一面：  w2m 看词想义 / m2w 看义想词 / mix 交替
+            → 它决定「同一张卡先露哪一面」，是学习感受里最直接的一层
+     ask   要你做什么：  recall 只想（自评） / choice 选一个 / spell 写出来 / listen 听出来
+            → 它决定交互的强度。想得起来但写不出来，正是「眼熟≠会」的分界
+     card  纯卡片速记仍然保留为兜底（没有任何前置条件，永远能用）
+
+     ⚠ 这两层必须【派生】出 activeModes，而不是各管各的。
+       否则就会出现「设置里写着看义想词、实际出的题还是看词选义」这类静默不一致 ——
+       而这正是原来那个界面的毛病：题型开关是唯一入口，用户改完看不出自己改了什么方向。
+     scanMode() 是唯一的派生函数，pickMode 只管按它挑，两处共用同一份判断。 */
+  vmode: "mix",                    /* w2m | m2w | mix —— 先给哪一面 */
+  vask: "auto",                    /* auto | recall | choice | spell | listen —— 要你做什么 */
+  vflipFirst: true,                /* 「只看/自评」档下，是否先藏答案再揭晓（正反面翻转） */
   initSteps: [1, 8, 30, 120],        /* 首次评价 → 分钟 */
   secondSteps: [15, 480, 1440, 4320],
   easeStart: 2.5, easeMin: 1.3, easeMax: 3.0,
@@ -1282,6 +1302,69 @@ function examPlan() {
     name: (bookMeta(bid) || { name: "" }).name || "当前词书"
   };
 }
+/* 首页的「今日精读」卡。四种状态各有各的文案，每种都给出下一步：
+     ok    取到了 → 标题 + 来源 + 生词量 + 开始精读
+     run   正在取 → 骨架 + 「正在取今天的文章…」（不显示上一篇，免得张冠李戴）
+     off   联网关着 / 离线 → 说明 + 「离线精读已存的文章」的退路
+     no    取失败 → 原因 + 「重试」+ 一句「不影响其它功能」
+   为什么要把失败原因摆在首页而不是 toast 一下了事：
+   自动取文是没人等它的后台行为，静默失败会让用户以为这功能根本不存在。 */
+function readHomeCardHTML() {
+  var c = cfg();
+  var st = AUTOA.st || "";
+  var a = st === "run" ? null : autoArtToday();
+  var h = '<div class="card rhome">' +
+    '<div class="card-h"><h2>今日精读</h2><span class="hint">打开应用自动取一篇真实文章</span></div>';
+
+  if (st === "run") {
+    h += '<p class="rmuted" style="font-size:12.5px;margin:2px 0 0">正在取今天的文章…</p>' +
+      '<div class="rskel"><i></i><i style="width:72%"></i></div>';
+    return h + "</div>";
+  }
+  if (a) {
+    var pf = artStat(a);
+    h += '<b class="rtitle" style="font-size:16px;display:block;margin:6px 0 4px">' + esc(a.t) + "</b>" +
+      '<div class="rmeta">' + esc(a.src) + " · " + esc(a.d) + (a.via ? " · 经中转" : "") +
+      (a.auto ? ' · <b class="rec">今日自动取文</b>' : "") + "</div>" +
+      '<div class="rprof small" style="margin:8px 0 0">' +
+      '<div class="rpcol"><b>' + pf.n + "</b><span>总词数</span></div>" +
+      '<div class="rpcol hot"><b>' + pf.nw + "</b><span>生词</span></div>" +
+      '<div class="rpcol"><b class="stars">' + starStr(pf.star) + "</b><span>难度</span></div>" +
+      "</div>" +
+      '<div class="rrow">' +
+      '<button class="btn primary sm" data-jump="art:' + esc(a.id) + '">开始精读 ›</button>' +
+      '<button class="btn ghost sm" data-jump="artq:' + esc(a.id) + '">直接做练习</button>' +
+      '<span class="sp"></span>' +
+      '<button class="btn ghost sm" id="rhMore">看更多文章</button>' +
+      "</div>";
+    return h + "</div>";
+  }
+  /* 没有可展示的文章：按原因给不同的出路 */
+  var why = AUTOA.msg || "";
+  if (c.netOff) {
+    h += '<p class="rmuted" style="font-size:12.5px;margin:2px 0 0">' +
+      "联网开关是关着的，所以没有自动取文（这是应用里唯一联网的模块，关掉就完全不发请求）。</p>" +
+      '<div class="rrow"><button class="btn sm" data-go="read">去打开联网开关 ›</button>' +
+      '<button class="btn ghost sm" data-go="read">粘贴导入一篇 ›</button></div>';
+    return h + "</div>";
+  }
+  if (NETST.on === false) {
+    h += '<p class="rmuted" style="font-size:12.5px;margin:2px 0 0">' +
+      "当前设备处于离线状态，取不了新文章。本地已存的文章不受影响。</p>" +
+      '<div class="rrow"><button class="btn ghost sm" data-go="read">离线精读已存的文章 ›</button></div>';
+    return h + "</div>";
+  }
+  h += '<p class="rmuted" style="font-size:12.5px;margin:2px 0 0">' +
+    esc(why || "今天还没有取到文章。") + "</p>";
+  if (why) {
+    h += '<p class="tiny faint" style="margin:4px 0 0">' +
+      esc("这不影响背单词 / 复习 / 词库 / 统计 —— 那几个功能全程不联网。") + "</p>";
+  }
+  h += '<div class="rrow"><button class="btn sm" id="rhRetry">重试一次</button>' +
+    '<button class="btn ghost sm" data-go="read">去精读页看看 ›</button>' +
+    '<button class="btn ghost sm" data-go="read">粘贴导入 ›</button></div>';
+  return h + "</div>";
+}
 function vToday() {
   var g = globalStats();
   var c = cfg();
@@ -1342,10 +1425,16 @@ function vToday() {
     '<button class="btn lg" id="startQuiz"><svg><use href="#i-target"/></svg>来个小测</button>' +
     "</div></div>";
 
+  /* 今日精读：把「今天该读的那篇文章」直接摆到首页。
+     需求是「打开就自动拉一篇，放在主页面上」—— 所以这张卡不是入口按钮，
+     而是内容本身：标题、来源、生词量、一个「开始精读」。
+     位置在复习预测之前：读文章是「今天做什么」的一部分，比看预测更靠前。
+     文案全部按 AUTOA.st 推导，不写死 —— 界面不能声称取到了实际没取到的东西。 */
+  h += readHomeCardHTML();
+
   /* 未来 7 天到期预测 */
   h += '<div class="card"><div class="card-h"><h2>未来 7 天复习量预测</h2><span class="hint">提前安排时间</span></div>' +
     forecastBars() + "</div>";
-
   /* 近 14 天 */
   h += '<div class="card"><div class="card-h"><h2>近 14 天学习量</h2><span class="hint">每日测评次数</span></div>' +
     barsHTML(14) + "</div>";
@@ -1589,6 +1678,85 @@ function sessionModes() {
   return a && a.length ? a.slice() : ["card"];
 }
 
+/* ---------- 8c-2. 背词模式：把 (方向 × 动作) 派生成题型序列 ----------
+ * 这是「统一设置背词偏好」那条需求的实现核心。全部是纯函数，不碰 DOM、不碰状态，
+ * 所以可以直接喂参数断言 —— 见 test-logic 的 [24]。
+ *
+ * 为什么不用一个「模式」字符串直接映射到题型列表：
+ *   因为方向是【依赖轮换】的，不是每张都一样。用户选「交替」时，
+ *   奇数张先给词、偶数张先给义 —— 这只能靠一个按序号计算的函数表达，
+ *   写死成一个列表就没法表达「交替」这件事了。
+ *   所以：modeAt(mode, dir, i) 逐张算方向，其余全是从它派生。
+ */
+
+/* 第 i 张卡先给哪一面。mix 时按序号奇偶交替 ——
+   用序号而不是随机：随机会出现连着五张同方向，感受上等于没有交替。 */
+function dirAt(i) {
+  var m = cfg().vmode || "mix";
+  if (m === "w2m") return "w2m";
+  if (m === "m2w") return "m2w";
+  return (i % 2 === 0) ? "w2m" : "m2w";
+}
+/* 「要你做什么」里，哪些动作需要「先看到词面」。
+   listen 和 spell 都是「听/写英文」，所以必须先给词（或至少不给释义当选项）；
+   choice 交给方向决定；recall 是纯自评，方向决定题干。 */
+var ASK_NAME = {
+  auto: "按方向自动", recall: "只想一想（自评）", choice: "选一个",
+  spell: "写出来", listen: "听出来"
+};
+var DIR_NAME = { w2m: "看单词想释义", m2w: "看释义想单词", mix: "两种轮流" };
+/* 从 (方向, 动作, 序号) 推出这一张该用哪个题型。
+   返回 null 表示「这个组合没有对应的题型」—— 调用方接着走 activeModes 轮换，
+   而不是硬塞一个不合适的题型进来。 */
+function modeFromPair(dir, ask, canSpell, canListen, canCloze) {
+  if (ask === "listen") return canListen ? "listen" : null;
+  if (ask === "spell") return (canSpell && dir !== "m2w") ? "spell" : null;
+  /* 「只看一听」：方向决定题干，揭晓时露出另一面 —— 由 vflipFirst 控制是否先藏 */
+  if (ask === "recall") return dir === "m2w" ? "recallCard" : "card";
+  if (ask === "choice") {
+    /* 选择题在两种方向下是不同的题型：看词选义 / 看义选词。
+       这就是「方向」这个维度原来被埋掉的地方 —— 它一直存在，只是没被说出来。 */
+    if (dir === "m2w") return "recall";
+    return "recog";
+  }
+  return null;
+}
+/* 主入口：第 i 张卡实际该用哪个题型。
+   优先级：① 用户显式配的 (方向, 动作) ② activeModes 轮换 ③ 卡片速记兜底。
+   ①② 都算不出来时才落到 ③ —— 「用户选了什么就一定按什么来」这条不能破。 */
+function pickModeIdx(i) {
+  /* 先把「这个设备 / 这个词支不支持」问清楚，避免推导出一个做不了的题 */
+  var r = rec((S && S.i < S.queue.length) ? S.queue[S.i] : null);
+  var canSpell = modeOK("spell", r), canListen = modeOK("listen", r), canCloze = modeOK("cloze", r);
+  var ask = cfg().vask || "auto";
+  if (ask !== "auto") {
+    var m = modeFromPair(dirAt(i), ask, canSpell, canListen, canCloze);
+    /* 推导出来的题型本身还有前置条件（比如 spell 要求有中文释义）——
+       交给 modeOK 再挡一道，挡下来就顺延，不让用户对着做不了的题 */
+    if (m && modeOK(m, r)) return m;
+  }
+  var modes = (S && S.modes && S.modes.length) ? S.modes : ["card"];
+  var n = modes.length, base = i % n;
+  for (var k = 0; k < n; k++) {
+    var mm = modes[(base + k) % n];
+    if (modeOK(mm, r)) return mm;
+  }
+  return "card";
+}
+/* 界面上的说明：把当前设置翻译成一句人话，让用户确认「我选的就是我想要的」。
+   这一段存在的理由就是那句反馈 —— 原来改完题型开关，界面上没有任何地方
+   能用一句话说清「现在到底是什么模式」。 */
+function vmodeDesc() {
+  var d = cfg().vmode || "mix", a = cfg().vask || "auto";
+  var m = DIR_NAME[d] || DIR_NAME.mix;
+  if (a === "auto") return m + "，按你勾选的题型轮换";
+  if (a === "recall") return m + "，只想一想然后自评" + (cfg().vflipFirst ? "（答案先盖住）" : "（答案直接给）");
+  if (a === "spell") return d === "m2w" ? "写出来 —— 但「看释义想单词」不能拼写（会变成听写），已退回自评" : m + "，写出单词";
+  if (a === "listen") return "听发音，判断是哪个词";
+  if (a === "choice") return d === "m2w" ? "看释义，从选项里选出单词" : d === "w2m" ? "看单词，从选项里选出释义" : "看单词选释义 / 看释义选单词，两种轮流";
+  return m;
+}
+
 /* ---------- 8d. 形近词组（易混词）数据 ----------
    CONF 是构建期算好的分组：每组 2–4 个「拼写相近、意思不同」的词。
    存成「组」而不是逐词的伙伴列表，是因为组内成员本来就互相共享 ——
@@ -1684,14 +1852,7 @@ function curMode() { return S.modes[S.i % S.modes.length]; }
    注意返回的必须是**实际渲染**的那个题型，因为卡头的题型标签读的就是它；
    否则会出现「标签写着听音辨词、画面却是一张卡片」的错位。 */
 function pickMode() {
-  var r = curWord();
-  var n = S.modes.length;
-  var base = S.i % n;
-  for (var k = 0; k < n; k++) {
-    var m = S.modes[(base + k) % n];
-    if (modeOK(m, r)) return m;
-  }
-  return "card";
+  return pickModeIdx(S ? S.i : 0);
 }
 
 function renderSession() {
@@ -1733,7 +1894,10 @@ function renderSession() {
   }
 }
 function modeTag(m) {
-  var names = { recog: "看词选义", recall: "看义选词", spell: "拼写", listen: "听音辨词", card: "卡片速记", cloze: "例句填空" };
+  var names = {
+    recog: "看词选义", recall: "看义选词", spell: "拼写", listen: "听音辨词",
+    card: "卡片速记", cloze: "例句填空", recallCard: "看义想词"
+  };
   return '<span class="tag accent">' + esc(names[m] || m) + "</span>";
 }
 function statusTag(r) {
@@ -1747,6 +1911,7 @@ function statusTag(r) {
 function cardBody(r, mode) {
   if (mode === "recog") return recogBody(r);
   if (mode === "recall") return recallBody(r);
+  if (mode === "recallCard") return recallCardBody(r);
   if (mode === "spell") return spellBody(r);
   if (mode === "listen") return listenBody(r);
   if (mode === "cloze") return clozeBody(r);
@@ -1806,6 +1971,43 @@ function clozeBody(r) {
     '<div class="spell-box"><input class="spell-input" id="spellIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="填入缺失的单词">' +
     '<div class="row" style="gap:8px;margin-top:12px"><button class="btn" id="say"><svg><use href="#i-vol"/></svg>听发音</button>' +
     '<button class="btn primary sp" id="spellOk">确认</button></div></div>';
+}
+/* 反方向的自评卡：**题干是释义，答案是单词**。
+   这就是用户说的「给定释义回想单词」被点名要的那种 —— 原来的六个题型里
+   只有「看义选词」是反方向的，而它给的是选择题（四个选项里认一个），
+   比「回想」轻得多：选项会把答案喂到嘴边，蒙对也算对。
+   真正要「回想」就必须不设选项，让自己先在心里过一遍，再揭晓。
+
+   两个开关各自管一件事，不互相顶：
+     · vflipFirst —— 「答案先盖住」还是「直接给」。盖住 = 强制先回想（有摩擦，记得牢）；
+                    直接给 = 省事（等于确认自己会不会）。这是**用户的偏好**，不该由代码猜。
+     · blurDef（沿用旧设置）—— 卡片速记那一档的老开关，语义相同，继续生效。
+   两者取「或」：任一要求盖住就盖住。这样老用户没动 vflipFirst 也不会感觉行为变了。 */
+function recallCardBody(r) {
+  /* S 可能为 null（比如渲染发生在会话之外，或被测试脚本直接调用）——
+     这里不假设它一定存在。原来 cardBodyFlip 直接读 S.revealed，
+     在那种场景下会抛 TypeError 把整张卡打空，属于「不该有的脆弱」。 */
+  var revealed = !!(S && S.revealed);
+  var blur = (cfg().vflipFirst || cfg().blurDef) && !revealed;
+  var h = '<div class="w-block"><div class="bt">根据释义回想单词</div>' + defHTML(r) +
+    (cfg().showEn && r[F.EN] ? '<div class="w-en">' + esc(r[F.EN]) + "</div>" : "") + "</div>";
+  /* 词头放在释义之后 —— 这正是「方向」在视觉上的体现。
+     它不能塞进 .w-word（那个类是大字号标题位，会让人以为这就是题干）。 */
+  h += '<div class="w-sep"></div>' +
+    '<div class="' + (blur ? "blurred" : "") + '" id="revBox">' +
+    '<div class="w-word">' + esc(r[F.W]) + "</div>" + ipaHTML(r) +
+    exHTML(r) + phraseHTML(r) + formsHTML(r) + rtHTML(r) + metaHTML(r) + mnemoHTML(r) +
+    '<div class="row wrap" style="gap:6px;margin-top:14px" id="mkBar">' + markBtns(r[F.W]) + "</div>" +
+    "</div>";
+  if (blur) h += '<div class="reveal">在心里过一遍，再点「看单词」或按空格揭晓</div>' +
+    '<div class="row" style="gap:8px"><button class="btn primary sp" id="reveal">看单词（空格）</button></div>';
+  /* 注意这里**不挂朗读按钮**：题干只有释义，先朗读就等于把答案读出来了。
+     揭晓之后（S.revealed）答案区里才出现发音入口 —— 见下面这段。 */
+  if (!blur && revealed) {
+    h += '<div class="row" style="gap:8px;margin-top:12px">' +
+      '<button class="btn sm" id="say"><svg><use href="#i-vol"/></svg>朗读</button></div>';
+  }
+  return h;
 }
 function cardBodyFlip(r) {
   var blur = cfg().blurDef && !S.revealed;
@@ -2243,6 +2445,19 @@ function bindCommon() {
     };
   });
   var sb = $("switchBook"); if (sb) sb.onclick = showBookPicker;
+  /* 首页「今日精读」卡上的三个入口。
+     重试按钮只在没取到时出现，所以点了必然能重新走一遍完整流程（含跨天缓存检查）。 */
+  var rhm = $("rhMore"); if (rhm) rhm.onclick = function () { go("read"); };
+  var rhr = $("rhRetry");
+  if (rhr) rhr.onclick = function () {
+    rhr.disabled = true;
+    AUTOA.busy = false;                    /* 清掉可能残留的锁：失败路径上它理论上已经复位，这里防一手 */
+    autoFetchArt(function (art, msg) {
+      render();
+      toast(art ? ("已取到《" + art.t + "》") : ("没取到：" + (msg || "原因未知")), art ? "ok" : "info");
+    });
+    render();
+  };
   var ss = $("startStudy"); if (ss) ss.onclick = function () { startSession("auto"); };
   var sr = $("startReview"); if (sr) sr.onclick = function () { startSession("review"); };
   var sq = $("startQuiz"); if (sq) sq.onclick = function () { go("quiz"); };
