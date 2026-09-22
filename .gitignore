@@ -67,7 +67,7 @@ _dev/_cnd_probe_*.html
 _dev/_shots/
 _dev/__pycache__/
 _dev/*.log
-_dev/_out_*.log
+_dev/_out_*
 
 # ---------- 一次性探针与运行日志 ----------
 # `_dev/` 里的文件分三类，只有第一类才是项目资产：
